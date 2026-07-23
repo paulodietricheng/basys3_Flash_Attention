@@ -1,22 +1,13 @@
 # Vivado
-.cache/
-.hw/
-.ip_user_files/
-.runs/
-.sim/
-.Xil/
+*.cache/
+*.hw/
+*.ip_user_files/
+*.runs/
+*.sim/
+*.gen/
+*.srcs/
+*.Xil/
 
 *.jou
 *.log
 *.str
-
-*.bit
-*.bin
-*.ltx
-
-*.wdb
-*.pb
-
-*.tmp
-
-*.basys3_flash_attention.lpr
