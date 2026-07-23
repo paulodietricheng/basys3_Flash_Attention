@@ -18,3 +18,5 @@
 *.pb
 
 *.tmp
+
+*.basys3_flash_attention.lpr
