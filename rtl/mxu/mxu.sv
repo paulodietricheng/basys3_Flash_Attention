@@ -29,9 +29,8 @@ module mxu(
     input  logic mxu_start,
     output logic mxu_done, 
     
-    input  n_dim_t n,
-    input  m_dim_t m,
-    input  p_dim_t p,
+    // TBD
+    input mxu_cmd_t mxu_cmd,
     
     // to sram_control  
     output logic mxu_reading_ram,  
@@ -39,7 +38,8 @@ module mxu(
     // External wires for Operand handler
     input  operand_bus_t in_a,
     input  operand_bus_t in_b,
-    output dim_t dim_to_fetch,
+    output k_dim_t a_k_rd_idx,
+    output k_dim_t b_k_rd_idx,
     
     // External wires for Systolic Array
     output accumulator_t c [0:SA_ROWS-1][0:SA_COLS-1],
@@ -51,27 +51,27 @@ module mxu(
     //-----------------------------------
     
     // Internal inputs for control
-    logic pe00_valid;
-    logic dim_valid;
+    logic a_k_valid;
+    logic b_k_valid;
     
     // Internal outputs fpr control
     logic array_en;
     logic clr_acc_n;
-    dim_t dim_idx;
+    k_dim_t a_k_idx;
+    k_dim_t b_k_idx;
     
     mxu_ctrl U_MXU_CTRL (
-        .clk       (clk),
-        .rst_n     (rst_n),
-        .mxu_start (mxu_start),
-        .mxu_done  (mxu_done),
-        .pe00_valid(pe00_valid),
-        .array_en  (array_en),
-        .clr_acc_n (clr_acc_n),
-        .dim_idx   (dim_idx),
-        .dim_valid (dim_valid),
-        .n(n),
-        .m(m),
-        .p(p),
+        .clk            (clk),
+        .rst_n          (rst_n),
+        .mxu_start      (mxu_start),
+        .mxu_done       (mxu_done),
+        .mxu_cmd        (mxu_cmd),
+        .array_en       (array_en),
+        .clr_acc_n      (clr_acc_n),
+        .a_k_idx        (a_k_idx),
+        .b_k_idx        (b_k_idx),
+        .a_k_valid      (a_k_valid),
+        .b_k_valid      (b_k_valid),
         .mxu_reading_ram(mxu_reading_ram)
     );
     
@@ -82,21 +82,20 @@ module mxu(
     // Internal outputs
     operand_t a_j [0:SA_ROWS-1];
     operand_t b_i [0:SA_COLS-1];
-    logic d_valid;  
-      
-    assign using_buffer = d_valid;
-    
+          
     mxu_op_handler U_MXU_OPH (
-        .clk      (clk),
-        .rst_n    (rst_n),
-        .dim_idx  (dim_idx),
-        .dim_valid(dim_valid),
-        .in_a     (in_a),
-        .in_b     (in_b),
-        .dim_to_fetch(dim_to_fetch),
-        .a_j      (a_j),
-        .b_i      (b_i),
-        .d_valid  (d_valid)
+        .clk       (clk),
+        .rst_n     (rst_n),
+        .a_k_idx   (a_k_idx),
+        .b_k_idx   (b_k_idx),
+        .a_k_valid (a_k_valid),
+        .b_k_valid (b_k_valid),
+        .in_a      (in_a),
+        .in_b      (in_b),
+        .a_k_rd_idx(a_k_rd_idx),
+        .b_k_rd_idx(b_k_rd_idx),
+        .a_j       (a_j),
+        .b_i       (b_i)
     );
     
     //---------------------------------
@@ -112,10 +111,8 @@ module mxu(
         .rst_n     (rst_n),
         .a_j       (a_j),
         .b_i       (b_i),
-        .d_valid   (d_valid),
         .a_j_skewed(a_j_skewed),
-        .b_i_skewed(b_i_skewed),
-        .pe00_valid(pe00_valid)
+        .b_i_skewed(b_i_skewed)
     );
     
     //-----------------------------------

@@ -13,9 +13,9 @@ module tb_mxu;
     logic rst_n;
     logic start;
     logic done;
-    n_dim_t n;
     m_dim_t m;
-    p_dim_t p;
+    n_dim_t n;
+    k_dim_t k;
     operand_bus_t in_a;
     operand_bus_t in_b;
     dim_t dim_to_fetch;
@@ -31,7 +31,7 @@ module tb_mxu;
         .mxu_done     (done),
         .m(m),
         .n(n),
-        .p(p),
+        .k(k),
         .in_a         (in_a),
         .in_b         (in_b),
         .dim_to_fetch (dim_to_fetch),
@@ -50,9 +50,9 @@ module tb_mxu;
     operand_t B [0:DEPTH-1][0:SA_COLS-1];
     accumulator_t golden [0:SA_ROWS-1][0:SA_COLS-1];
     accumulator_t golden_row_max [0:SA_ROWS-1];  
-    assign n = SA_ROWS;
-    assign m = D_MODEL;
-    assign p = SA_COLS;
+    assign m = SA_ROWS;
+    assign n = SA_COLS;
+    assign k = D_MODEL;
     int errors;
     // =====================================================
     // SRAM MODEL

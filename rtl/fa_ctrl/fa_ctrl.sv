@@ -33,7 +33,7 @@ module fa_ctrl (
     input  p_dim_t p,
 
     // mxu
-    output logic mxu_start,
+    output logic mxu_start_qk,
     input  logic mxu_done,
 
     // softmax

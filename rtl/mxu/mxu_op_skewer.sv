@@ -27,14 +27,10 @@ module mxu_op_skewer(
     // From Operand Handler
     input operand_t a_j [0:SA_ROWS-1],
     input operand_t b_i [0:SA_COLS-1],
-    input logic d_valid,    
     
     // To systolic array
     output operand_t a_j_skewed [0:SA_ROWS-1],
-    output operand_t b_i_skewed [0:SA_COLS-1],
-    
-    // To systolic Control
-    output logic pe00_valid
+    output operand_t b_i_skewed [0:SA_COLS-1]
 );
     
     // Row/col 0 has zero delay.
@@ -48,8 +44,6 @@ module mxu_op_skewer(
         end
     end
     
-    assign pe00_valid = rst_n && d_valid;
-
     generate
         genvar row;
         for (row = 1; row < SA_ROWS; row++) begin : GEN_SKEW_ROWS
