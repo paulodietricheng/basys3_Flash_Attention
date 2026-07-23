@@ -1,0 +1,20 @@
+# Vivado
+.cache/
+.hw/
+.ip_user_files/
+.runs/
+.sim/
+.Xil/
+
+*.jou
+*.log
+*.str
+
+*.bit
+*.bin
+*.ltx
+
+*.wdb
+*.pb
+
+*.tmp
