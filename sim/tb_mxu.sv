@@ -345,9 +345,14 @@ module tb_mxu;
         run_matmul(SA_ROWS, SA_COLS, 8, k_dim_t'(0), k_dim_t'(0));
         compute_golden_slice(k_dim_t'(0), k_dim_t'(0), 8, 1'b1); // clear + accumulate
 
-        $display("\n===== CASE 3b: 8x8x8, b_k_offset=8 (V tile 1, no reset) =====");
+        compute_golden_row_max();
+        print_golden();
+        print_dut_result();
+        check_result();
+
+        $display("\n===== CASE 3b: 8x8x8, b_k_offset=8 (V tile 1) =====");
         run_matmul(SA_ROWS, SA_COLS, 8, k_dim_t'(0), k_dim_t'(8));
-        compute_golden_slice(k_dim_t'(0), k_dim_t'(8), 8, 1'b0); // accumulate onto existing golden
+        compute_golden_slice(k_dim_t'(0), k_dim_t'(8), 8, 1'b0); // clear + accumulate with offset
 
         compute_golden_row_max();
         print_golden();
