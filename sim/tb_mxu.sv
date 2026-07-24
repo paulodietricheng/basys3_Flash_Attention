@@ -112,13 +112,16 @@ module tb_mxu;
         end
     endtask
 
-    task automatic pulse_start;
-        begin
-            @(negedge clk);
-            start <= 1'b1;
-            @(negedge clk);
-            start <= 1'b0;
-        end
+    task automatic pulse_start(input mxu_cmd_t cmd_in);
+    begin
+        @(negedge clk);
+        cmd   <= cmd_in;
+        start <= 1'b1;
+    
+        @(negedge clk);
+        start <= 1'b0;
+        cmd   <= '0;
+    end
     endtask
 
     task automatic wait_for_done;
@@ -300,15 +303,29 @@ module tb_mxu;
     // CASE RUNNER: builds cmd, pulses start, waits done
     // =====================================================
     task automatic run_matmul(
-        input m_dim_t m, input n_dim_t n, input k_dim_t k,
-        input k_dim_t a_k_offset, input k_dim_t b_k_offset
+        input m_dim_t m,
+        input n_dim_t n,
+        input k_dim_t k,
+        input k_dim_t a_k_offset,
+        input k_dim_t b_k_offset
     );
-        begin
-            build_cmd(m, n, k, m_dim_t'(0), a_k_offset, b_k_offset, n_dim_t'(0),
-                      m_dim_t'(0), n_dim_t'(0));
-            pulse_start();
-            wait_for_done();
-        end
+        mxu_cmd_t local_cmd;
+    begin
+        local_cmd = '0;
+    
+        local_cmd.m          = m;
+        local_cmd.n          = n;
+        local_cmd.k          = k;
+        local_cmd.a_m_offset = '0;
+        local_cmd.a_k_offset = a_k_offset;
+        local_cmd.b_k_offset = b_k_offset;
+        local_cmd.b_n_offset = '0;
+        local_cmd.c_m_offset = '0;
+        local_cmd.c_n_offset = '0;
+    
+        pulse_start(local_cmd);
+        wait_for_done();
+    end
     endtask
 
     // =====================================================

@@ -43,8 +43,15 @@ module mxu_ctrl(
     output logic mxu_reading_ram
 );
 
+    // latch the command
+    mxu_cmd_t reg_cmd;
+    always_ff @(posedge clk) begin
+        if (mxu_start)
+            reg_cmd <= mxu_cmd;
+    end
+
     logic [RESULT_LAT_W - 1:0] result_lat; 
-    assign result_lat = mxu_cmd.m + mxu_cmd.n + mxu_cmd.k - 2 + DSP_LAT + mxu_cmd.n; 
+    assign result_lat = reg_cmd.m + reg_cmd.n + reg_cmd.k - 2 + DSP_LAT + reg_cmd.n; 
 
     logic [RESULT_LAT_W - 1:0] counter;
 
@@ -73,8 +80,8 @@ module mxu_ctrl(
     end
     
     // a_k_valid condition
-    assign a_k_valid = (curr_state == m_STREAM) && (a_k_idx < mxu_cmd.k + mxu_cmd.a_k_offset);
-    assign b_k_valid = (curr_state == m_STREAM) && (b_k_idx < mxu_cmd.k + mxu_cmd.b_k_offset);
+    assign a_k_valid = (curr_state == m_STREAM) && (a_k_idx < reg_cmd.k + reg_cmd.a_k_offset);
+    assign b_k_valid = (curr_state == m_STREAM) && (b_k_idx < reg_cmd.k + reg_cmd.b_k_offset);
 
     // FSM Controller
     always_ff @(posedge clk or negedge rst_n) begin
@@ -109,8 +116,8 @@ module mxu_ctrl(
 
                 m_CLEAR : begin
                     clr_acc_n <= 1'b0;
-                    a_k_idx   <= mxu_cmd.a_k_offset;
-                    b_k_idx   <= mxu_cmd.b_k_offset;
+                    a_k_idx   <= reg_cmd.a_k_offset;
+                    b_k_idx   <= reg_cmd.b_k_offset;
 
                     curr_state <= m_STREAM;
                 end
