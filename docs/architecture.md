@@ -2,6 +2,7 @@
 
 ## 1. System Overview
 This hardware accelerator has the goal of computing FlashAttention with a single systolic array pass. The mathematical definiton of Attention can be defined by:
+
 $$
 O = \text{softmax}(QK^\top)V
 $$
