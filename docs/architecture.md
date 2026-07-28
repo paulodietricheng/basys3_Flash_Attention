@@ -15,7 +15,7 @@ $$
 ## 3. Top-Level Hardware Architecture
 The accelerator interfaces with a Host CPU via UART and manages internal execution using a dedicated controller, a Matrix Multiply Unit (MXU), and a Vector Processing Unit (VPU).
 
-![Block Diagram](docs/images/fa_bd.png)
+![Block Diagram](images/fa_bd.png)
 
 ## 4. Component Breakdown
 
@@ -30,7 +30,7 @@ The accelerator interfaces with a Host CPU via UART and manages internal executi
 
 ## 5. Execution Dataflow
 
-![FlashAttention algorithm](docs/images/fa_eq.png)
+![FlashAttention algorithm](images/fa_eq.png)
 
 ## 6. Register-Transfer Level (RTL) & Deployment Target
 *   **Target Device**: Basys3 xc7a35t.
