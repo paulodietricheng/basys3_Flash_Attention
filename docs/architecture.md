@@ -25,7 +25,7 @@ The accelerator interfaces with a Host CPU via UART and manages internal executi
 
 ### Vector Processing Unit (VPU)
 *   **Responsibility**: Computes online element-wise row statistics ($m_j$, $l_j$, and $O_j$).
-*  **Microarchitecture**: INT8 to FXP12 convertion unit, exponential calculation unit $e^x$ and registers to keep the statistics.
+*   **Microarchitecture**: INT8 to FXP12 convertion unit, exponential calculation unit $e^x$ and registers to keep the statistics.
 
 ## 5. Execution Dataflow
 $$
