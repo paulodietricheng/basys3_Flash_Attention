@@ -4,12 +4,13 @@
 // Engineer: 
 // 
 // Create Date: 05/20/2026 04:25:34 PM
-// Design Name: 
 // Module Name: pe
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
+// Project Name: basys3_flash_attention
 // Description: 
+// 
+// Module intakes two operands and performs the MAC operation
+// c = c + (a x b)
+// It outputs 
 // 
 // Dependencies: 
 // 
