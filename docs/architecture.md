@@ -30,7 +30,7 @@ The accelerator interfaces with a Host CPU via UART and manages internal executi
 
 ## 5. Execution Dataflow
 
-![FlashAttention algorithm](images/fa_eq.png)
+![FlashAttention algorithm](images/fa_bd.png)
 
 ## 6. Register-Transfer Level (RTL) & Deployment Target
 *   **Target Device**: Basys3 xc7a35t.
