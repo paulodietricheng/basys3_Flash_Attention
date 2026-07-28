@@ -28,24 +28,7 @@ The accelerator interfaces with a Host CPU via UART and manages internal executi
 *   **Microarchitecture**: INT8 to FXP12 convertion unit, exponential calculation unit $e^x$ and registers to keep the statistics.
 
 ## 5. Execution Dataflow
-$$
-\begin{aligned}
-&\textbf{for each query tile } j: \\[4pt]
-&\qquad \text{Load } Q_j \\[8pt]
-&\qquad \textbf{for each key/value tile } i: \\[4pt]
-&\qquad\qquad \text{Load } K_i, V_i \\[8pt]
-&\qquad\qquad s_{ji} = q_j k_i^T \\[8pt]
-&\qquad\qquad m_j = \max(m_j, s_{ji}) \\[8pt]
-&\qquad\qquad l_j =
-e^{m_{j-1}-m_j}*l_{j-1}
-+
-e^{s_{ji}-m_j} \\[8pt]
-&\qquad\qquad O_j =
-\frac{e^{m_{j-1}-m_j}*l_{j-1}}{l_j}O_{j-1}
-+
-\frac{e^{s_{ji}-m_j}}{l_j}v_j
-\end{aligned}
-$$
+<!-- TODO: Add the algorithym-->
 
 ## 6. Register-Transfer Level (RTL) & Deployment Target
 *   **Target Device**: Basys3 xc7a35t.
