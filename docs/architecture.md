@@ -146,8 +146,12 @@ Thus, buffers A and B, which store Q and K will be column-major, and buffers C a
 
 # References
 [1] T. Dao, D. Y. Fu, S. Ermon, A. Rudra, and C. Ré, *FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness*, Advances in Neural Information Processing Systems 35 (NeurIPS 2022), 2022. [Online]. Available: [https://arxiv.org/abs/2205.14135](https://arxiv.org/abs/2205.14135)
+
 [2] Digilent, *Basys3 FPGA Board Reference Manual*, Rev. C, Aug. 12, 2014. [Online]. Available: [AMD Documentation](https://www.amd.com/content/dam/amd/en/documents/university/aup-boards/XUPBasys3/documentation/Basys3_rm_8_22_2014.pdf)
+
 [3] Tejas Raja, *Systolic Array Data Flows for Efficient Matrix Multiplication in Deep Neural Networks*, arXiv preprint arXiv:2410.22595, 2024. [Online]. Available: https://arxiv.org/abs/2410.22595
+
 [4] AMD (Xilinx), *7 Series DSP48E1 Slice User Guide*, UG479 v1.10, 2018. [Online]. Available: [AMD Documentation](https://docs.amd.com/v/u/en-US/ug479_7Series_DSP48E1)
+
 [5] Khataei, Alireza and Bazargan, Kia. *CompressedLUT: An Open Source Tool for Lossless Compression of Lookup Tables for Function Evaluation and Beyond*. FPGA '24, 2024.  
 https://doi.org/10.1145/3626202.3637575
