@@ -1,3 +1,6 @@
+# Architectural decisions for FlashAttention acceleration
+#### By Paulo Dietrich, July 29 2026
+
 # Overview
 This system is a FlashAttention [1] Accelerator targeting the basys3 [2] board designed as a learning experiment and intro 
 to transformers accelerators. It uses a single output-stationary systolic array pass with the goal of computing:
