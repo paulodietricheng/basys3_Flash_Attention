@@ -153,7 +153,7 @@ Thus, buffers A and B, which store Q and K will be column-major, and buffers C a
 
 [2] Digilent, *Basys3 FPGA Board Reference Manual*, Rev. C, Aug. 12, 2014. [Online]. Available: [AMD Documentation](https://www.amd.com/content/dam/amd/en/documents/university/aup-boards/XUPBasys3/documentation/Basys3_rm_8_22_2014.pdf)
 
-[3] [3] A. Samajdar, J. M. Joseph, Y. Zhu, P. Whatmough, M. Mattina, and T. Krishna, A Systematic Methodology for Characterizing Scalability of DNN Accelerators using SCALE-Sim, in Proc. IEEE Int. Symp. on Performance Analysis of Systems and Software (ISPASS), 2020. [Online]. Available: https://horizon-lab.org/pubs/ispass20.pdf
+[3] A. Samajdar, J. M. Joseph, Y. Zhu, P. Whatmough, M. Mattina, and T. Krishna, A Systematic Methodology for Characterizing Scalability of DNN Accelerators using SCALE-Sim, in Proc. IEEE Int. Symp. on Performance Analysis of Systems and Software (ISPASS), 2020. [Online]. Available: https://horizon-lab.org/pubs/ispass20.pdf
 
 [4] AMD (Xilinx), *7 Series DSP48E1 Slice User Guide*, UG479 v1.10, 2018. [Online]. Available: [AMD Documentation](https://docs.amd.com/v/u/en-US/ug479_7Series_DSP48E1)
 
