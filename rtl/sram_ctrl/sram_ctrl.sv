@@ -47,7 +47,8 @@ module sram_ctrl (
     // ------------
     
     // From operand_handler
-    input  dim_t dim_to_fetch,
+    input  k_dim_t a_k_rd_idx,
+    input  k_dim_t b_k_rd_idx,
     
     // To sram
     output logic [ADDR_W-1:0] bufA_rd_addr_a,
@@ -68,7 +69,8 @@ module sram_ctrl (
     );
     
     rd_addr_gen U_RAG (
-        .dim_to_fetch (dim_to_fetch),
+        .a_k_rd_idx    (a_k_rd_idx),
+        .a_k_rd_idx    (a_k_rd_idx),
         .bufA_rd_addr_a(bufA_rd_addr_a),
         .bufA_rd_addr_b(bufA_rd_addr_b),
         .bufB_rd_addr_a(bufB_rd_addr_a), 
