@@ -43,7 +43,8 @@ module mxu(
     
     // External wires for Systolic Array
     output accumulator_t c [0:SA_ROWS-1][0:SA_COLS-1],
-    output accumulator_t row_max [0:SA_ROWS-1] 
+    output accumulator_t row_max [0:SA_ROWS-1],
+    output accumulator_t row_sum [0:SA_ROWS-1] 
 );
 
     //-----------------------------------
@@ -126,7 +127,8 @@ module mxu(
         .a_j_skewed(a_j_skewed),
         .b_i_skewed(b_i_skewed),
         .c         (c),
-        .row_max   (row_max)
+        .row_max   (row_max),
+        .row_sum   (row_sum)
     );
 
 endmodule

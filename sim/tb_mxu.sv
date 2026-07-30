@@ -26,6 +26,7 @@ module tb_mxu;
 
     accumulator_t c [0:SA_ROWS-1][0:SA_COLS-1];
     accumulator_t row_max [0:SA_ROWS-1];
+    accumulator_t row_sum [0:SA_ROWS-1];
 
     // =====================================================
     // DUT
@@ -42,7 +43,8 @@ module tb_mxu;
         .a_k_rd_idx    (a_k_rd_idx),
         .b_k_rd_idx    (b_k_rd_idx),
         .c               (c),
-        .row_max         (row_max)
+        .row_max         (row_max),
+        .row_sum         (row_sum)
     );
 
     // =====================================================
@@ -61,6 +63,7 @@ module tb_mxu;
 
     accumulator_t golden [0:SA_ROWS-1][0:SA_COLS-1];
     accumulator_t golden_row_max [0:SA_ROWS-1];
+    accumulator_t golden_row_sum [0:SA_ROWS-1];
 
     int errors;
 
@@ -229,6 +232,17 @@ module tb_mxu;
             end
         end
     endtask
+    
+    task automatic compute_golden_row_sum;
+        begin
+            for (int row = 0; row < SA_ROWS; row++) begin
+                golden_row_sum[row] = golden[row][0];
+                for (int col = 1; col < SA_COLS; col++) begin
+                    golden_row_sum[row] = golden_row_sum[row] + golden[row][col];
+                end
+            end
+        end
+    endtask
 
     // =====================================================
     // PRINT HELPERS
@@ -244,6 +258,10 @@ module tb_mxu;
             $display("\n===== GOLDEN ROW MAX =====");
             for (int row = 0; row < SA_ROWS; row++)
                 $display("row %0d: %0d", row, $signed(golden_row_max[row]));
+                
+            $display("\n===== GOLDEN ROW SUM =====");
+            for (int row = 0; row < SA_ROWS; row++)
+                $display("row %0d: %0d", row, $signed(golden_row_sum[row]));
         end
     endtask
 
@@ -258,6 +276,10 @@ module tb_mxu;
             $display("\n===== DUT ROW MAX =====");
             for (int row = 0; row < SA_ROWS; row++)
                 $display("row %0d: %0d", row, $signed(row_max[row]));
+                
+            $display("\n===== DUT ROW SUM =====");
+            for (int row = 0; row < SA_ROWS; row++)
+                $display("row %0d: %0d", row, $signed(row_sum[row])); 
         end
     endtask
 
@@ -285,6 +307,15 @@ module tb_mxu;
                     errors++;
                 end else begin
                     $display("PASS ROW_MAX[%0d] = %0d", row, $signed(row_max[row]));
+                end
+            end
+            for (int row = 0; row < SA_ROWS; row++) begin
+                if (row_sum[row] !== golden_row_sum[row]) begin
+                    $display("FAIL ROW_SUM[%0d]: DUT=%0d GOLD=%0d",
+                             row, $signed(row_sum[row]), $signed(golden_row_sum[row]));
+                    errors++;
+                end else begin
+                    $display("PASS ROW_SUM[%0d] = %0d", row, $signed(row_sum[row]));
                 end
             end
         end
@@ -342,6 +373,7 @@ module tb_mxu;
         run_matmul(SA_ROWS, SA_COLS, D_MODEL, k_dim_t'(0), k_dim_t'(0));
         compute_golden_slice(k_dim_t'(0), k_dim_t'(0), D_MODEL, 1'b1);
         compute_golden_row_max();
+        compute_golden_row_sum();
         print_golden();
         print_dut_result();
         check_result();
@@ -352,6 +384,7 @@ module tb_mxu;
         run_matmul(SA_ROWS, SA_COLS, 8, k_dim_t'(0), k_dim_t'(0));
         compute_golden_slice(k_dim_t'(0), k_dim_t'(0), 8, 1'b1);
         compute_golden_row_max();
+        compute_golden_row_sum();
         print_golden();
         print_dut_result();
         check_result();
@@ -363,6 +396,7 @@ module tb_mxu;
         compute_golden_slice(k_dim_t'(0), k_dim_t'(0), 8, 1'b1); // clear + accumulate
 
         compute_golden_row_max();
+        compute_golden_row_sum();
         print_golden();
         print_dut_result();
         check_result();
@@ -372,6 +406,7 @@ module tb_mxu;
         compute_golden_slice(k_dim_t'(0), k_dim_t'(8), 8, 1'b0); // clear + accumulate with offset
 
         compute_golden_row_max();
+        compute_golden_row_sum();
         print_golden();
         print_dut_result();
         check_result();
