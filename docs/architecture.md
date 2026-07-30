@@ -50,16 +50,7 @@ Additionaly, it also outputs the maximum `row_max` and sum `row_sum` per row at 
 The latency for an output-stationary (OS) $M \times K \times N$ can be defined by the following formula [3]:
 
 $$
-T_{cyc} = M + N + K -2
-$$
-
-However, to account for the internal DSP latency [4], an instance of `DSPLAT` must be added. The systolic array was also modified, and the
-processing elements also take the function of computating `row_max` and `row_sum`. These functions are implemented as
-a linear comparision between each adjacent PE, where the left PE sends its sum and max to the right PE. To 
-account for this, another instance of `N` must be added. As `N > DSPLAT`, we can drop the `DSPLAT` value, thus being left with:
-
-$$
-T_{cyc} = M + 2N + K - 2
+T_{cyc} = 2M + N + K -2
 $$
 
 ### Control
@@ -92,7 +83,7 @@ Has the goal of applying the online softmax algorythim to the Attention Score $S
 
 It does it by updating the three statistics $m_j$, $l_j$ and $o_j$ for each $j$ row, as refered in the algorithm image. 
 
-It converts $S$ to FXP12 precision, and implements the $e^x$ function using CompressedLut [5]
+It converts $S$ to FXP12 precision, and implements the $e^x$ function using CompressedLut [4]
 
 ## SRAM
 Unified SRAM buffer for storing the $Q_j$, $K_j$, $V_j$ and $O_j$ tiles on chip. (V and O to be added)
@@ -158,7 +149,5 @@ Thus, buffers A and B, which store Q and K will be column-major, and buffers C a
 
 [3] A. Samajdar, J. M. Joseph, Y. Zhu, P. Whatmough, M. Mattina, and T. Krishna, A Systematic Methodology for Characterizing Scalability of DNN Accelerators using SCALE-Sim, in Proc. IEEE Int. Symp. on Performance Analysis of Systems and Software (ISPASS), 2020. [Online]. Available: https://horizon-lab.org/pubs/ispass20.pdf
 
-[4] AMD (Xilinx), *7 Series DSP48E1 Slice User Guide*, UG479 v1.10, 2018. [Online]. Available: [AMD Documentation](https://docs.amd.com/v/u/en-US/ug479_7Series_DSP48E1)
-
-[5] Khataei, Alireza and Bazargan, Kia. *CompressedLUT: An Open Source Tool for Lossless Compression of Lookup Tables for Function Evaluation and Beyond*. FPGA '24, 2024.  
+[4] Khataei, Alireza and Bazargan, Kia. *CompressedLUT: An Open Source Tool for Lossless Compression of Lookup Tables for Function Evaluation and Beyond*. FPGA '24, 2024.  
 https://doi.org/10.1145/3626202.3637575

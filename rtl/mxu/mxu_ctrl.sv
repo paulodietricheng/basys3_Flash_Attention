@@ -51,7 +51,7 @@ module mxu_ctrl(
     end
 
     logic [RESULT_LAT_W - 1:0] result_lat; 
-    assign result_lat = reg_cmd.m + 2 * reg_cmd.n + reg_cmd.k - 2; 
+    assign result_lat = 2 * reg_cmd.m + reg_cmd.n + reg_cmd.k - 2; 
 
     logic [RESULT_LAT_W - 1:0] counter;
 
