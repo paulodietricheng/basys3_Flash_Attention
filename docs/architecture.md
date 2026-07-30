@@ -126,7 +126,7 @@ $$
 However, the systolic array needs all `SA_ROWS` and `SA_COLS` dimension `i` at the same cycle. Thus, it is more efficient if the buffers that feed `Q` and `i` to the systolic array are column major, meaning that consecutive address will store the rows of the same dimension `i`. Thus, the base address of dimension `i` inside a buffer is given by:
 
 $$
-\text{base\_addr\_dim[i]} = \frac{\text{sa\_lines}}{\text{dim\_per\_addr}}*i
+\text{base-addr-dim[i]} = \frac{\text{sa-lines}}{\text{dim-per-addr}}*i
 $$
 
 Thus, buffers A and B, which store Q and K will be column-major, and buffers C and D, which store V and O, will be row_major.
