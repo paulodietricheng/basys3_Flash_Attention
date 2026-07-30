@@ -50,13 +50,16 @@ Additionaly, it also outputs the maximum `row_max` and sum `row_sum` per row at 
 The latency for an output-stationary (OS) $M \times K \times N$ can be defined by the following formula [3]:
 
 $$
-T_{cyc} = 2M + N + K -2
+T_{cyc} = M + N + K -2
 $$
 
-However, to account for the internal DSP latency [4] and computation of `row_max` and `row_sum`, `DSP_LAT` and another instance of `N` must be added. Thus, the total latency for the computation is given by:
+However, to account for the internal DSP latency [4], an instance of `DSPLAT` must be added. The systolic array was also modified, and the
+processing elements also take the function of computating `row_max` and `row_sum`. These functions are implemented as
+a linear comparision between each adjacent PE, where the left PE sends its sum and max to the right PE. To 
+account for this, another instance of `N` must be added. As `N > DSPLAT`, we can drop the `DSPLAT` value, thus being left with:
 
 $$
-T_{cyc} = \text{DSPLAT} + 2M + 2N + K - 2
+T_{cyc} = M + 2N + K - 2
 $$
 
 ### Control

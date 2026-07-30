@@ -166,7 +166,7 @@ package fa_pkg;
     localparam DSP_LAT = 4;
 
     // Total result latency from first PE token to final valid result.
-    localparam RESULT_LAT_W = $clog2(SA_ROWS + SA_COLS + D_MODEL - 2 + DSP_LAT + SA_COLS);
+    localparam RESULT_LAT_W = $clog2(SA_ROWS + 2*SA_COLS + D_MODEL - 2);
 
     // Scalar data types
     typedef logic signed [OPERAND_W-1:0] operand_t;
