@@ -56,7 +56,7 @@ $$
 However, to account for the internal DSP latency [4] and computation of `row_max` and `row_sum`, `DSP_LAT` and another instance of `N` must be added. Thus, the total latency for the computation is given by:
 
 $$
-T_{cyc} = \text{DSP_LAT} + 2M + 2N + K - 2
+T_{cyc} = \text{DSPLAT} + 2M + 2N + K - 2
 $$
 
 ### Control
@@ -120,7 +120,7 @@ It is responsible for data transfers between the HBM and the SRAM via an AXI4 in
 In the HBM, the matrices are stored row-major, meaining that consecutive addresses will store the dimensions of the same $\text{row[j]}$ . Thus, the base address of $\text{row[j]}$ inside a buffer is given by:
 
 $$
-\text{base\_addr\_row[j]} = \frac{d}{\text{dim\_per\_addr}}*j
+\text{base-addr-row[j]} = \frac{d}{\text{dim-per-addr}}*j
 $$
 
 However, the systolic array needs all `SA_ROWS` and `SA_COLS` dimension `i` at the same cycle. Thus, it is more efficient if the buffers that feed `Q` and `i` to the systolic array are column major, meaning that consecutive address will store the rows of the same dimension `i`. Thus, the base address of dimension `i` inside a buffer is given by:
