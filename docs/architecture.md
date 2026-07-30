@@ -56,7 +56,7 @@ $$
 However, to account for the internal DSP latency [4] and computation of `row_max` and `row_sum`, `DSP_LAT` and another instance of `N` must be added. Thus, the total latency for the computation is given by:
 
 $$
-T_{cyc} = \text{DSPLAT} + 2M + 2N + K - 2
+T_{cyc} = \text{DSP_LAT} + 2M + 2N + K - 2
 $$
 
 ### Control
