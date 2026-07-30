@@ -136,7 +136,7 @@ Thus, buffers A and B, which store Q and K will be column-major, and buffers C a
 ## V1
 - Design VPU
 - Design Central Control FSM
-- Design DMA
+- Design DMA that fills the entire SRAM buffer with the matrix tile, which then will be tiled again in a $SA-LINE \times d$ tile for use of the systolic array. 
 - Integrate and test
 - Add UART interface with CPU (For simplicity of testing and debugging)
 - Implement and run on basys. 
