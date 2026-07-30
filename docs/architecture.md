@@ -45,7 +45,7 @@ It aims to implement the following algorithm
 
 This module is responsible for intaking 2 matrices A and B with respective $M \times K$ and $K \times N$ dimensions and produce an $M \times N$ output. The precisions of the operands are INT8, and the accumulator has INT32 precision. 
 
-Additionaly, it also outputs the maximum `row_max` and sum `row_sum` per row at every cycle. (`row_sum` still to be implemented)
+Additionaly, it also outputs the maximum `row_max` and sum `row_sum` per row at every cycle.
 
 The latency for an output-stationary (OS) $M \times K \times N$ can be defined by the following formula [3]:
 
