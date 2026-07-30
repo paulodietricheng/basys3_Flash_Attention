@@ -37,7 +37,7 @@ It aims to implement the following algorithm
 |fa_done    |Computation done|
 |mxu_start  |Start the GEMM systolic array|
 |mxu_cmd    |Pass dimensions M, N, K of the M x K x N GEMM, row and column offset for tiled matmul|
-|dma_rq     |Pass number of active channels, Transfer direction, Transpose, Base address, Destination address, Byte count|
+|dma_rq     |Transfer direction, Transpose, Base address, Destination address, Byte count|
 
 ## MXU
 
