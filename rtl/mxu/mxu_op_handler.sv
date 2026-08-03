@@ -31,8 +31,8 @@ module mxu_op_handler (
     input  logic   b_k_valid,
     
     // SRAM
-    input  operand_bus_t in_a,
-    input  operand_bus_t in_b,
+    input  operand_t [SA_ROWS-1:0] in_a,
+    input  operand_t [SA_COLS-1:0] in_b,
     
     // rd_addr_gen
     output k_dim_t a_k_rd_idx,
@@ -62,18 +62,18 @@ module mxu_op_handler (
     assign b_k_rd_idx = b_k_idx;
     
     
-    // slice incoming vectors / output 0 for invalid dimentions
+    // Forward incoming vectors / output 0 for invalid dimentions
     generate
     genvar row;
         for (row = 0; row < SA_ROWS; row++) begin : GEN_ROW_SLICER
             always_comb begin
                 if (a_k_valid_d) begin
-                    a_j[row] = in_a [OPERAND_W*row + OPERAND_W -1 : OPERAND_W*row];     
+                    a_j[row] = in_a[row];
                 end else begin
                     a_j[row] = '0;
-                end   
+                end
             end
-        end        
+        end
     endgenerate
     
     generate
@@ -81,12 +81,12 @@ module mxu_op_handler (
         for (col = 0; col < SA_COLS; col++) begin : GEN_COL_SLICER
             always_comb begin
                 if (b_k_valid_d) begin
-                    b_i[col] = in_b [OPERAND_W*col + OPERAND_W -1 : OPERAND_W*col];     
+                    b_i[col] = in_b[col];
                 end else begin
                     b_i[col] = '0;
-                end   
+                end
             end
-        end        
+        end
     endgenerate
 
 endmodule

@@ -28,15 +28,16 @@ package fa_pkg;
     localparam SA_COLS    = 8;
     localparam SA_ROWS    = 8;
     localparam D_MODEL    = 16;
+    
+    // Model precision parameters
     localparam OPERAND_W  = 8; // INT8
     localparam ACC_W      = 32; // INT32
-    localparam SRAM_WORD_W = 32;
 
     //=============================================================================
     // BRAM organization
     //=============================================================================
     
-    // Single BRAM primitive
+    // Bram parameters
     localparam BRAM_WORD_W = 32;
     localparam BRAM_DEPTH  = 1024;
     
@@ -48,10 +49,12 @@ package fa_pkg;
     // On-chip SRAM
     //=============================================================================
     
+    localparam int NUM_BUF = 4;
+   
     // Four BRAMs combined into one SRAM buffer
-//    localparam SRAM_WORD_W = 64;
-    localparam SRAM_DEPTH  = 4 * BRAM_DEPTH;
-    localparam SRAM_ADDR_W = $clog2(SRAM_DEPTH);
+    localparam SRAM_WORD_W = 32;
+    localparam SRAM_DEPTH  = NUM_BUF * BRAM_DEPTH;
+    localparam SRAM_ADDR_W = $clog2(BRAM_DEPTH);
     
     //=============================================================================
     // Fake HBM organization
@@ -104,8 +107,6 @@ package fa_pkg;
     // ------------------------------------------------------------
     // Systolic Array
     // ------------------------------------------------------------
-
-    // DON'T TOUCH
        
     // Input matrices bus widths
     
@@ -152,15 +153,6 @@ package fa_pkg;
         
         logic [BRAM_BC_W-1:0] byte_count;
     } dma_rq_t ;
-    
-    // Words per SRAM address.
-    localparam WPA = SRAM_WORD_W / OPERAND_W;
-    
-    // Address width of pingpong buffer
-    localparam ADDR_W = $clog2(1024);
-
-    // Width of a full vector sent into the operand handler.
-    localparam OPERAND_BUS_W = SA_ROWS * OPERAND_W;
 
     // Systolic latency parameter
     localparam DSP_LAT = 4;
@@ -172,8 +164,5 @@ package fa_pkg;
     typedef logic signed [OPERAND_W-1:0] operand_t;
     typedef logic signed [ACC_W-1:0]     accumulator_t;
     typedef logic [SRAM_WORD_W-1:0]      sram_word_t;
-
-    // Vector with N operands
-    typedef logic [OPERAND_BUS_W-1:0] operand_bus_t;
-
+    typedef logic [BRAM_WORD_W-1:0]      bram_word_t;
 endpackage

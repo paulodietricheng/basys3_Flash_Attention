@@ -25,45 +25,38 @@ module db_ctrl (
     input  logic clk, rst_n,
 
     // From Central control
-    input  logic Atile_advance,
-    input  logic dmaA_wr_done,
-    input  logic dmaB_wr_done,
+    input  logic Q_tile_done,
+    input  logic KV_tile_done,
 
-    // From mxu_ctrl
-    input  logic mxu_reading_ram,
-
-    // To double_buffer
-    output logic bufA_read_ram,
-    output logic bufB_read_ram
+    //double_buffer
+    input  logic bufA_busy,
+    input  logic bufB_busy,
+    input  logic bufC_busy,
+    input  logic bufD_busy,
+    
+    output logic bufA_read_bank,
+    output logic bufB_read_bank,
+    output logic bufC_read_bank,
+    output logic bufD_read_bank
 );
-
-    logic a_advance_pending;
-    logic b_advance_pending;
-
+    // Switch buffers
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            bufA_read_ram     <= 1'b0;
-            bufB_read_ram     <= 1'b0;
-            a_advance_pending <= 1'b0;
-            b_advance_pending <= 1'b0;
+            bufA_read_bank <= '0;
+            bufB_read_bank <= '0;
+            bufC_read_bank <= '0;
+            bufD_read_bank <= '0;
         end else begin
-            // latch the request
-            if (dmaA_wr_done & Atile_advance)
-                a_advance_pending <= 1'b1;
-
-            if (dmaB_wr_done)
-                b_advance_pending <= 1'b1;
-
-            // fire the flip as soon as the MXU is clear of the ram
-            if (a_advance_pending & !mxu_reading_ram) begin
-                bufA_read_ram     <= ~bufA_read_ram;
-                a_advance_pending <= 1'b0;
+            if (Q_tile_done && !bufA_busy)
+                bufA_read_bank <= ~bufA_read_bank;
+            
+            if (KV_tile_done && !(bufB_busy || bufC_busy)) begin
+                bufB_read_bank <= ~bufB_read_bank;
+                bufC_read_bank <= ~bufC_read_bank;
             end
-
-            if (b_advance_pending & !mxu_reading_ram) begin
-                bufB_read_ram     <= ~bufB_read_ram;
-                b_advance_pending <= 1'b0;
-            end
+            
+            if(Q_tile_done && !bufD_busy)
+                bufD_read_bank <= ~bufD_read_bank;
         end
     end
 

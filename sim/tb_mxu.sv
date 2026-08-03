@@ -19,8 +19,8 @@ module tb_mxu;
     mxu_cmd_t cmd;
     logic mxu_reading_ram;
 
-    operand_bus_t in_a;
-    operand_bus_t in_b;
+    operand_t [SA_ROWS-1:0] in_a;
+    operand_t [SA_COLS-1:0] in_b;
     k_dim_t a_k_rd_idx;
     k_dim_t b_k_rd_idx;
 
@@ -70,29 +70,30 @@ module tb_mxu;
     // =====================================================
     // SRAM MODEL
     // =====================================================
-    function automatic operand_bus_t pack_a_column(input k_dim_t k_idx);
-        operand_bus_t packed_word;
+    function automatic operand_t [SA_ROWS-1:0] pack_a_column(input k_dim_t k_idx);
+        operand_t [SA_ROWS-1:0] packed_word;
         begin
             packed_word = '0;
             for (int row = 0; row < SA_ROWS; row++) begin
-                packed_word[8*row +: 8] = A_MEM[row][k_idx];
+                packed_word[row] = A_MEM[row][k_idx];
             end
             pack_a_column = packed_word;
         end
     endfunction
-
-    function automatic operand_bus_t pack_b_row(input k_dim_t k_idx);
-        operand_bus_t packed_word;
+    
+    function automatic operand_t [SA_COLS-1:0] pack_b_row(input k_dim_t k_idx);
+        operand_t [SA_COLS-1:0] packed_word;
         begin
             packed_word = '0;
             for (int col = 0; col < SA_COLS; col++) begin
-                packed_word[8*col +: 8] = B_MEM[k_idx][col];
+                packed_word[col] = B_MEM[k_idx][col];
             end
             pack_b_row = packed_word;
         end
     endfunction
-
-    logic [OPERAND_BUS_W-1:0] a_reg, b_reg;
+    
+    operand_t [SA_ROWS-1:0] a_reg;
+    operand_t [SA_ROWS-1:0] b_reg;
 
     always_ff @(posedge clk) begin
         a_reg <= pack_a_column(a_k_rd_idx);

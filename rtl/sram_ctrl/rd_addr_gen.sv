@@ -28,10 +28,10 @@ module rd_addr_gen (
     input  k_dim_t b_k_rd_idx,
     
     // To sram
-    output logic [ADDR_W-1:0] bufA_rd_addr_a,
-    output logic [ADDR_W-1:0] bufA_rd_addr_b,
-    output logic [ADDR_W-1:0] bufB_rd_addr_a,
-    output logic [ADDR_W-1:0] bufB_rd_addr_b
+    output logic [SRAM_ADDR_W-1:0] bufA_rd_addr_a,
+    output logic [SRAM_ADDR_W-1:0] bufA_rd_addr_b,
+    output logic [SRAM_ADDR_W-1:0] bufB_rd_addr_a,
+    output logic [SRAM_ADDR_W-1:0] bufB_rd_addr_b
 );
     always_comb begin
         bufA_rd_addr_a = a_k_rd_idx << 1;
@@ -39,4 +39,6 @@ module rd_addr_gen (
         bufB_rd_addr_a = b_k_rd_idx << 1;
         bufB_rd_addr_b = (b_k_rd_idx << 1) + 1;
     end
+    
+    // Add logic for VPU
 endmodule

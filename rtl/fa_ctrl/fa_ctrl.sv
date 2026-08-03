@@ -35,7 +35,8 @@ module fa_ctrl (
     input  logic mxu_done, // move to VPU
 
     // sram_controller
-    output logic Atile_advance,
+    output logic Q_tile_done,
+    output logic KV_tile_done,
 
     // dma
     output dma_rq_t dma_rq_0,

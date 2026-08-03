@@ -36,8 +36,8 @@ module mxu(
     output logic mxu_reading_ram,  
     
     // External wires for Operand handler
-    input  operand_bus_t in_a,
-    input  operand_bus_t in_b,
+    input  operand_t [SA_ROWS-1:0] in_a,
+    input  operand_t [SA_COLS-1:0] in_b,
     output k_dim_t a_k_rd_idx,
     output k_dim_t b_k_rd_idx,
     

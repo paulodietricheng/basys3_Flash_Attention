@@ -32,8 +32,8 @@ module sram_ctrl (
     input  logic Atile_advance,
     
     // From dma
-    input  logic dmaA_wr_done,
-    input  logic dmaB_wr_done,
+    input  logic dma_chA_done,
+    input  logic dma_chB_done,
     
     // From mxu_ctrl
     input logic mxu_reading_ram,
@@ -41,6 +41,8 @@ module sram_ctrl (
     // To double_buffer
     output logic bufA_read_ram,
     output logic bufB_read_ram,
+    output logic bufC_read_ram,
+    output logic bufD_read_ram,
     
     // ------------
     // rd_addr_gen
@@ -51,20 +53,22 @@ module sram_ctrl (
     input  k_dim_t b_k_rd_idx,
     
     // To sram
-    output logic [ADDR_W-1:0] bufA_rd_addr_a,
-    output logic [ADDR_W-1:0] bufA_rd_addr_b,
-    output logic [ADDR_W-1:0] bufB_rd_addr_a,
-    output logic [ADDR_W-1:0] bufB_rd_addr_b
+    output logic [SRAM_ADDR_W-1:0] bufA_rd_addr_a,
+    output logic [SRAM_ADDR_W-1:0] bufA_rd_addr_b,
+    output logic [SRAM_ADDR_W-1:0] bufB_rd_addr_a,
+    output logic [SRAM_ADDR_W-1:0] bufB_rd_addr_b
 );
 
     db_ctrl U_DBC (
         .clk(clk), 
         .rst_n(rst_n),
         .Atile_advance(Atile_advance),
-        .dmaA_wr_done (dmaA_wr_done),
-        .dmaB_wr_done (dmaB_wr_done),
+        .dma_chA_done (dma_chA_done),
+        .dma_chB_done (dma_chB_done),
         .bufA_read_ram(bufA_read_ram),
         .bufB_read_ram(bufB_read_ram),
+        .bufC_read_ram(bufA_read_ram),
+        .bufD_read_ram(bufB_read_ram),
         .mxu_reading_ram  (mxu_reading_ram)
     );
     
