@@ -29,11 +29,11 @@ module mxu(
     input  logic mxu_start,
     output logic mxu_done, 
     
-    // TBD
+    // Control
     input mxu_cmd_t mxu_cmd,
     
-    // to sram_control  
-    output logic mxu_reading_ram,  
+    // to sram  
+    output logic mxu_using_mem,  
     
     // External wires for Operand handler
     input  operand_t [SA_ROWS-1:0] in_a,
@@ -41,7 +41,7 @@ module mxu(
     output k_dim_t a_k_rd_idx,
     output k_dim_t b_k_rd_idx,
     
-    // External wires for Systolic Array
+    // To VPU
     output accumulator_t c [0:SA_ROWS-1][0:SA_COLS-1],
     output accumulator_t row_max [0:SA_ROWS-1],
     output accumulator_t row_sum [0:SA_ROWS-1] 
@@ -73,7 +73,7 @@ module mxu(
         .b_k_idx        (b_k_idx),
         .a_k_valid      (a_k_valid),
         .b_k_valid      (b_k_valid),
-        .mxu_reading_ram(mxu_reading_ram)
+        .mxu_using_mem(mxu_using_mem)
     );
     
     //-----------------------------------

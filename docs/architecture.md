@@ -78,6 +78,12 @@ The design uses an output-stationary dataflow, enabling the computation of an $M
 #### Processing Element (PE)
 Intakes `in_a` and `in_b` and computes `c = c + (in_a * in_b)`, and also evaluates wether the forwarded result from the left processing element is greater than the accumulator of this PE, and forwards the larger one to the next PE on the right.
 
+## ARCHITECTURAL REVIEW - August 5th, 2026.
+
+`row_max` and `row_sum` precompute by the systolic array will be dropped. The new architectural decision is to stream each row element `s_ji` a cycle to the online softmax computation, which will then in a pipeline, compute update the registers repeatedly foreach new `s_ji` until `last_kv_tile = 1`.
+This will reduce the control logic of the softmax and simplify the RTL implementation. 
+Furthermore, there will be a request taker module, that will be responsible for taking qk_req and pv_req. 
+
 ## VPU
 Has the goal of applying the online softmax algorythim to the Attention Score $S$ produced by the MXU.
 
