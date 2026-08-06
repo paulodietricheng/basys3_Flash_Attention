@@ -50,7 +50,8 @@ package fa_pkg;
     //=============================================================================
     
     localparam int NUM_BUF = 4;
-   
+    localparam int DMA_CH  = 2;
+    
     // Four BRAMs combined into one SRAM buffer
     localparam SRAM_WORD_W = 32;
     localparam SRAM_DEPTH  = NUM_BUF * BRAM_DEPTH;
@@ -146,12 +147,22 @@ package fa_pkg;
     typedef struct packed {
         logic direction; // 0 = HBM -> SRAM, 1 = SRAM -> HBM
         logic transpose; // 0 = false, 1 = true
+        logic [1:0] buf_tag;
+        // 00 BUFA
+        // 01 BUFB
+        // 10 BUFC
+        // 11 BUFD
+        
+        logic [9:0] rows;
+        logic [9:0] cols;
         
         // Base addresses
         logic [HBM_ADDR_W-1:0] hbm_base_addr;
         logic [SRAM_ADDR_W-1:0] sram_base_addr;
         
         logic [BRAM_BC_W-1:0] byte_count;
+        
+        logic [HBM_ADDR_W-1:0] hbm_stride;
     } dma_rq_t ;
 
     // Systolic latency parameter

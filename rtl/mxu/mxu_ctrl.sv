@@ -40,7 +40,7 @@ module mxu_ctrl(
     output logic b_k_valid,
     
     // To db_control
-    output logic mxu_reading_ram
+    output logic mxu_using_mem
 );
 
     // latch the command
@@ -93,9 +93,8 @@ module mxu_ctrl(
             mxu_done  <= 1'b0;
             a_k_idx   <= '0;
             b_k_idx   <= '0;
-            mxu_reading_ram <= 1'b0;
-        end
-        else begin
+            mxu_using_mem <= 1'b0;
+        end else begin
         
             // safe defaults
             array_en  <= 1'b0;
@@ -103,7 +102,7 @@ module mxu_ctrl(
             mxu_done  <= 1'b0;
             a_k_idx   <= '0;
             b_k_idx   <= '0;
-            mxu_reading_ram <= 1'b0;
+            mxu_using_mem <= 1'b0;
 
             case (curr_state)
 
@@ -125,7 +124,7 @@ module mxu_ctrl(
                 m_STREAM : begin
                     array_en  <= 1'b1;
                     clr_acc_n <= 1'b1;
-                    mxu_reading_ram <= 1'b1;
+                    mxu_using_mem <= 1'b1;
 
                     if (!(a_k_valid & b_k_valid)) begin
                         curr_state <= m_DRAIN;
@@ -141,7 +140,7 @@ module mxu_ctrl(
                     clr_acc_n <= 1'b1;
                     a_k_idx   <= '0;
                     b_k_idx   <= '0;
-                    mxu_reading_ram <= 1'b0;
+                    mxu_using_mem <= 1'b0;
 
                     curr_state <= (counter == result_lat) ? m_DONE : m_DRAIN;
                 end
@@ -152,7 +151,7 @@ module mxu_ctrl(
                     clr_acc_n <= 1'b1;
                     a_k_idx   <= '0;
                     b_k_idx   <= '0;
-                    mxu_reading_ram <= 1'b0;
+                    mxu_using_mem <= 1'b0;
 
                     curr_state <= m_IDLE;
                 end
