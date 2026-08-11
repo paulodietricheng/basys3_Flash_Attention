@@ -22,29 +22,27 @@
 import fa_pkg::*;
 
 module sram (
-    input  logic clk,
+    input logic clk,
 
     // Input data
-    input  sram_word_t din_a [NUM_BUF],
-    input  sram_word_t din_b [NUM_BUF],
+    input sram_word_t din [NUM_BUF][NUM_PORTS],
 
     // Double buffer control
-    input  logic read_bank [NUM_BUF],
+    input logic read_bank [NUM_BUF],
 
-    // Addresses
-    input  logic [SRAM_ADDR_W-1:0] wr_addr_a [NUM_BUF],
-    input  logic [SRAM_ADDR_W-1:0] wr_addr_b [NUM_BUF],
-    input  logic [SRAM_ADDR_W-1:0] rd_addr_a [NUM_BUF],
-    input  logic [SRAM_ADDR_W-1:0] rd_addr_b [NUM_BUF],
+    // Write addresses
+    input logic [SRAM_ADDR_W-1:0] wr_addr [NUM_BUF][NUM_PORTS],
+
+    // Read addresses
+    input logic [SRAM_ADDR_W-1:0] rd_addr [NUM_BUF][NUM_PORTS],
 
     // Output data
-    output sram_word_t dout_a [NUM_BUF],
-    output sram_word_t dout_b [NUM_BUF],
+    output sram_word_t dout [NUM_BUF][NUM_PORTS],
 
     // Busy signals
-    input  logic mxu_using_mem [NUM_BUF],
-    input  logic vpu_using_mem [NUM_BUF],
-    input  logic dma_using_mem [NUM_BUF],
+    input logic mxu_using_mem [NUM_BUF],
+    input logic vpu_using_mem [NUM_BUF],
+    input logic dma_using_mem [NUM_BUF],
 
     output logic busy [NUM_BUF]
 );
@@ -52,21 +50,17 @@ module sram (
     genvar i;
     generate
         for (i = 0; i < NUM_BUF; i++) begin : g_double_buf
-            double_buf u_double_buf (
+            double_buf U_DB (
                 .clk          (clk),
-                .din_a        (din_a[i]),
-                .din_b        (din_b[i]),
+                .din          (din[i]),
                 .read_bank    (read_bank[i]),
                 .busy         (busy[i]),
                 .dma_using_mem(dma_using_mem[i]),
                 .mxu_using_mem(mxu_using_mem[i]),
                 .vpu_using_mem(vpu_using_mem[i]),
-                .rd_addr_a    (rd_addr_a[i]),
-                .rd_addr_b    (rd_addr_b[i]),
-                .wr_addr_a    (wr_addr_a[i]),
-                .wr_addr_b    (wr_addr_b[i]),
-                .dout_a       (dout_a[i]),
-                .dout_b       (dout_b[i])
+                .rd_addr      (rd_addr[i]),
+                .wr_addr      (wr_addr[i]),
+                .dout         (dout[i])
             );
         end
     endgenerate

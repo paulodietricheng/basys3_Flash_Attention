@@ -38,6 +38,7 @@ package fa_pkg;
     //=============================================================================
     
     // Bram parameters
+    localparam NUM_PORTS = 2;
     localparam BRAM_WORD_W = 32;
     localparam BRAM_DEPTH  = 1024;
     
@@ -156,13 +157,14 @@ package fa_pkg;
         logic [9:0] rows;
         logic [9:0] cols;
         
+        logic [BRAM_BC_W-1:0] byte_count;
+        
         // Base addresses
         logic [HBM_ADDR_W-1:0] hbm_base_addr;
         logic [SRAM_ADDR_W-1:0] sram_base_addr;
+                
+        logic [HBM_ADDR_W-1:0] hbm_stride;        
         
-        logic [BRAM_BC_W-1:0] byte_count;
-        
-        logic [HBM_ADDR_W-1:0] hbm_stride;
     } dma_rq_t ;
 
     // Systolic latency parameter

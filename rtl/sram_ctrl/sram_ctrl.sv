@@ -53,10 +53,8 @@ module sram_ctrl (
     input  k_dim_t b_k_rd_idx,
     
     // To sram
-    output logic [SRAM_ADDR_W-1:0] bufA_rd_addr_a,
-    output logic [SRAM_ADDR_W-1:0] bufA_rd_addr_b,
-    output logic [SRAM_ADDR_W-1:0] bufB_rd_addr_a,
-    output logic [SRAM_ADDR_W-1:0] bufB_rd_addr_b
+    output logic [SRAM_ADDR_W-1:0] rd_addr [NUM_BUF][NUM_PORTS]
+
 );
 
     db_ctrl U_DBC (

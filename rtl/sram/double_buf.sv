@@ -22,96 +22,79 @@
 import fa_pkg::*;
 
 module double_buf(
-
     input logic clk,
-    
+
     // DMA
     input logic dma_using_mem,
-    input sram_word_t din_a,
-    input sram_word_t din_b,
-    input  logic [SRAM_ADDR_W-1:0] wr_addr_a,
-    input  logic [SRAM_ADDR_W-1:0] wr_addr_b,
-   
+    input sram_word_t din [NUM_PORTS],
+    input logic [SRAM_ADDR_W-1:0] wr_addr [NUM_PORTS],
+
     // SRAM_Control
-    input  logic read_bank,     // 0 = reads ram0, 1 = reads ram1
+    input logic read_bank,
     output logic busy,
-   
+
     // addr_gen
-    input  logic [SRAM_ADDR_W-1:0] rd_addr_a,
-    input  logic [SRAM_ADDR_W-1:0] rd_addr_b,
-    
+    input logic [SRAM_ADDR_W-1:0] rd_addr [NUM_PORTS],
+
     // mxu
-    input  logic mxu_using_mem,
-    
+    input logic mxu_using_mem,
+
     // vpu
-    input  logic vpu_using_mem,
-    
+    input logic vpu_using_mem,
+
     // To Word Packer
-    output sram_word_t dout_a,
-    output sram_word_t dout_b
+    output sram_word_t dout [NUM_PORTS]
 );
 
     assign busy = mxu_using_mem | vpu_using_mem | dma_using_mem;
 
-    // intermediate ramx_dout wires
-    sram_word_t bank0_dout_a;
-    sram_word_t bank0_dout_b;
-    sram_word_t bank1_dout_a;
-    sram_word_t bank1_dout_b;
-    
-    // intermediate address wires
-    logic [SRAM_ADDR_W-1:0] bank0_addr_a;
-    logic [SRAM_ADDR_W-1:0] bank0_addr_b;
-    logic [SRAM_ADDR_W-1:0] bank1_addr_a;
-    logic [SRAM_ADDR_W-1:0] bank1_addr_b;
-    
-    // ping-pong rd/wr addressing
+    sram_word_t bank0_dout [NUM_PORTS];
+    sram_word_t bank1_dout [NUM_PORTS];
+
+    logic [SRAM_ADDR_W-1:0] bank0_addr [NUM_PORTS];
+    logic [SRAM_ADDR_W-1:0] bank1_addr [NUM_PORTS];
+
+    // Ping-pong read/write addressing.
     always_comb begin
-        if (read_bank) begin
-            bank1_addr_a = rd_addr_a;
-            bank1_addr_b = rd_addr_b;
-            bank0_addr_a = wr_addr_a;
-            bank0_addr_b = wr_addr_b;
-        end else begin
-            bank1_addr_a = wr_addr_a;
-            bank1_addr_b = wr_addr_b;
-            bank0_addr_a = rd_addr_a;
-            bank0_addr_b = rd_addr_b;
+        for (int p = 0; p < NUM_PORTS; p++) begin
+            if (read_bank) begin
+                bank1_addr[p] = rd_addr[p];
+                bank0_addr[p] = wr_addr[p];
+            end else begin
+                bank1_addr[p] = wr_addr[p];
+                bank0_addr[p] = rd_addr[p];
+            end
         end
     end
 
     bram U_BANK0 (
         .clk   (clk),
-        .din_a (din_a),
-        .addr_a(bank0_addr_a),
+        .din_a (din[0]),
+        .addr_a(bank0_addr[0]),
         .we_a  (read_bank),
-        .dout_a(bank0_dout_a),
-        .din_b (din_b),
-        .addr_b(bank0_addr_b),
+        .dout_a(bank0_dout[0]),
+        .din_b (din[1]),
+        .addr_b(bank0_addr[1]),
         .we_b  (read_bank),
-        .dout_b(bank0_dout_b)
+        .dout_b(bank0_dout[1])
     );
-    
+
     bram U_BANK1 (
         .clk   (clk),
-        .din_a (din_a),
-        .addr_a(bank1_addr_a),
+        .din_a (din[0]),
+        .addr_a(bank1_addr[0]),
         .we_a  (~read_bank),
-        .dout_a(bank1_dout_a),
-        .din_b (din_b),
-        .addr_b(bank1_addr_b),
+        .dout_a(bank1_dout[0]),
+        .din_b (din[1]),
+        .addr_b(bank1_addr[1]),
         .we_b  (~read_bank),
-        .dout_b(bank1_dout_b)
+        .dout_b(bank1_dout[1])
     );
-    
+
     always_comb begin
-        if (read_bank) begin
-            dout_a = bank1_dout_a;
-            dout_b = bank1_dout_b;
-        end else begin
-            dout_a = bank0_dout_a;
-            dout_b = bank0_dout_b;
+        for (int p = 0; p < NUM_PORTS; p++) begin
+            dout[p] = read_bank ? bank1_dout[p] : bank0_dout[p];
         end
     end
-    
+
 endmodule
