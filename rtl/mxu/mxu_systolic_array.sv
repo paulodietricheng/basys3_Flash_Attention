@@ -44,16 +44,12 @@ module mxu_systolic_array(
     // Interconnect fabric
     operand_t      inter_cols [0:SA_ROWS-1][0:SA_COLS];
     operand_t      inter_rows [0:SA_ROWS][0:SA_COLS-1];
-    accumulator_t  inter_max  [0:SA_ROWS-1][0:SA_COLS];
-    accumulator_t  inter_sum  [0:SA_ROWS-1][0:SA_COLS];
 
     // Input data to the fabric
     always_comb begin        
         // Populate rows
         for(int j = 0; j < SA_ROWS; j++) begin
             inter_cols[j][0] = a_j_skewed[j];
-            inter_max [j][0] = 32'h80000000;
-            inter_sum [j][0] = 32'b0;
         end
         
         // Populate columns
@@ -74,23 +70,12 @@ module mxu_systolic_array(
                     .array_en (array_en),
                     .in_a   (inter_cols[j][i]),
                     .in_b   (inter_rows[j][i]),
-                    .in_max (inter_max[j][i]),
-                    .in_sum (inter_sum[j][i]),
                     .out_a  (inter_cols[j][i+1]),
                     .out_b  (inter_rows[j+1][i]),
-                    .out_max(inter_max[j][i+1]),
-                    .out_sum(inter_sum[j][i+1]),
                     .c      (c[j][i])
                 );
             end
         end
     endgenerate
-
-    always_comb begin
-        for (int j = 0; j < SA_ROWS; j++) begin
-            row_max[j] = inter_max[j][SA_ROWS];
-            row_sum[j] = inter_sum[j][SA_ROWS];
-        end
-    end
 
 endmodule

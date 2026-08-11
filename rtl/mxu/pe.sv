@@ -26,32 +26,22 @@ module pe (
     input  logic clk, rst_n, clr_acc_n,
 
     input  operand_t in_a, in_b,
-    input  accumulator_t in_max,
-    input  accumulator_t in_sum,
     input  logic array_en,
     
     output operand_t out_a, out_b, 
-    output accumulator_t out_max, 
-    output accumulator_t out_sum, 
     output accumulator_t c
 );
 
     // Input Pipeline Stage
     operand_t areg, breg;
-    accumulator_t maxreg;
-    accumulator_t sumreg;
     
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             areg <= '0;
             breg <= '0;
-            maxreg <= '0;
-            sumreg <= '0;
         end else if (array_en) begin
             areg <= in_a;
             breg <= in_b;
-            maxreg <= in_max;
-            sumreg <= in_sum;
         end
     end
     
@@ -76,21 +66,5 @@ module pe (
     end
     
     assign c = acc_reg;
-    
-    // Compare incoming max to present accumulator
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n)
-            out_max <= 32'h80000000;
-        else if (array_en)
-            out_max <= (maxreg > acc_reg) ? maxreg : acc_reg;
-    end
-    
-    // Sum incoming sum to present sum
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n)
-            out_sum <= 32'b0;
-        else if (array_en)
-            out_sum <= in_sum + acc_reg;
-    end
        
 endmodule

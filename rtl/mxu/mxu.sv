@@ -42,9 +42,7 @@ module mxu(
     output k_dim_t b_k_rd_idx,
     
     // To VPU
-    output accumulator_t c [0:SA_ROWS-1][0:SA_COLS-1],
-    output accumulator_t row_max [0:SA_ROWS-1],
-    output accumulator_t row_sum [0:SA_ROWS-1] 
+    output accumulator_t c [0:SA_ROWS-1][0:SA_COLS-1]
 );
 
     //-----------------------------------
@@ -126,9 +124,7 @@ module mxu(
         .clr_acc_n (clr_acc_n),
         .a_j_skewed(a_j_skewed),
         .b_i_skewed(b_i_skewed),
-        .c         (c),
-        .row_max   (row_max),
-        .row_sum   (row_sum)
+        .c         (c)
     );
 
 endmodule
