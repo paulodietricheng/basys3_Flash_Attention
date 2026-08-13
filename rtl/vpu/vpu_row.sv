@@ -75,16 +75,17 @@ module vpu_row (
     accumulator_t exp_out;
 
     logic exp_start;
-    logic exp_done;
     logic exp_busy;
+    logic exp_done;    
 
     exp U_EXP (
-        .clk   (clk),
-        .rst_n (rst_n),
-        .start (exp_start),
-        .in    (exp_in),
-        .out   (exp_out),
-        .done  (exp_done)
+        .clk  (clk),
+        .rst_n(rst_n),
+        .start(exp_start),
+        .busy (exp_busy),
+        .done (exp_done),
+        .in   (exp_in),
+        .out  (exp_out)
     );
 
     // SCL UNIT
@@ -98,32 +99,32 @@ module vpu_row (
     logic scl_busy;
 
     scl U_SCL (
-        .clk        (clk),
-        .rst_n      (rst_n),
-        .in_vector  (scl_in_vector),
-        .in_scalar  (scl_in_scalar),
-        .scl_start  (scl_start),
-        .scl_busy   (scl_busy),
-        .scl_done   (scl_done),
-        .out_vector (scl_out_vector)
+        .clk       (clk),
+        .rst_n     (rst_n),
+        .start     (scl_start),
+        .busy      (scl_busy),
+        .done      (scl_done),
+        .in_vector (scl_in_vector),
+        .in_scalar (scl_in_scalar),
+        .out_vector(scl_out_vector)
     );
-
 
     // RCP UNIT
     accumulator_t rcp_in;
     accumulator_t rcp_out;
 
     logic rcp_start;
-    logic rcp_done;
     logic rcp_busy;
+    logic rcp_done;    
 
-    reciprocal U_RCP (
+    rcp U_RCP (
         .clk   (clk),
         .rst_n (rst_n),
         .start (rcp_start),
+        .busy  (rcp_busy),
+        .done  (rcp_done),
         .in    (rcp_in),
-        .out   (rcp_out),
-        .done  (rcp_done)
+        .out   (rcp_out) 
     );
 
     // SOFTMAX REGISTERS
@@ -156,8 +157,13 @@ module vpu_row (
     accumulator_t x_cur;
     assign x_cur = x_i_reg[col_idx];
 
-    operand_t     V_cur [0:D_MODEL-1];
-    assign V_cur = V[col_idx];
+    accumulator_t V_cur [0:D_MODEL-1];
+    genvar i;
+    generate
+        for (i = 0; i < D_MODEL; i++) begin
+            assign V_cur[i] = accumulator_t'(V[col_idx][i]);
+        end
+    endgenerate
 
     // Latch the incoming registers
     always_ff @(posedge clk or negedge rst_n) begin
@@ -261,9 +267,7 @@ module vpu_row (
                     if (!exp_busy) begin
                         exp_in <= safe_diff;
                         exp_start <= 1'b1;
-                        exp_busy <= 1'b1;
                     end else begin
-                        exp_busy <= 1'b1;
                         exp_start <= 1'b0;
                     end
                     if (exp_done) begin
@@ -278,9 +282,7 @@ module vpu_row (
                     if (!exp_busy) begin
                         exp_in <= max_diff;
                         exp_start <= 1'b1;
-                        exp_busy <= 1'b1;
                     end else begin
-                        exp_busy <= 1'b1;
                         exp_start <= 1'b0;
                     end
                     if (exp_done) begin
@@ -299,11 +301,9 @@ module vpu_row (
                 v_SCALE_O: begin
                 if (!scl_busy) begin
                         scl_start <= 1'b1;
-                        exp_busy <= 1'b1;
                         scl_in_vector <= V_cur;
                         scl_in_scalar <= alpha;
                     end else begin
-                        scl_busy <= 1'b1;
                         scl_start <= 1'b0;
                     end
                     if (scl_done) begin
@@ -317,11 +317,9 @@ module vpu_row (
                 v_SCALE_V: begin
                 if (!scl_busy) begin
                         scl_start <= 1'b1;
-                        exp_busy <= 1'b1;
                         scl_in_vector <= o_i_minus_1;
                         scl_in_scalar <= beta;
                     end else begin
-                        scl_busy <= 1'b1;
                         scl_start <= 1'b0;
                     end
                     if (scl_done) begin
@@ -355,15 +353,12 @@ module vpu_row (
                     if (!rcp_busy) begin
                         rcp_in <= d_i;
                         rcp_start <= 1'b1;
-                        rcp_busy <= 1'b1;
                     end else begin
                         rcp_start <= 1'b0;
-                        rcp_busy <= 1'b1;
                     end
                     if (rcp_done) begin
                         d_inv <= rcp_out;
                         curr_state <= v_NORM_O;
-                        rcp_busy <= 1'b0;
                     end else
                         curr_state <= v_RCP;
                 end
@@ -371,17 +366,14 @@ module vpu_row (
                 v_NORM_O: begin
                 if (!scl_busy) begin
                         scl_start <= 1'b1;
-                        exp_busy <= 1'b1;
                         scl_in_vector <= o_i;
                         scl_in_scalar <= d_inv;
                     end else begin
-                        scl_busy <= 1'b1;
                         scl_start <= 1'b0;
                     end
                     if (scl_done) begin
                         v_scaled <= scl_out_vector;
                         curr_state <= v_SCALE_V;
-                        exp_busy <= 1'b0;
                     end else
                         curr_state <= v_SCALE_O;    
                 end
