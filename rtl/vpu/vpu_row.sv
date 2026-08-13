@@ -273,7 +273,6 @@ module vpu_row (
                     if (exp_done) begin
                         exp_safe_diff <= exp_out;
                         curr_state <= v_EXP_MAX;
-                        exp_busy <= 1'b0;
                     end else
                         curr_state <= v_EXP_SAFE;
                 end     
@@ -288,7 +287,6 @@ module vpu_row (
                     if (exp_done) begin
                         exp_max_diff <= exp_out;
                         curr_state <= v_UPDATE_D;
-                        exp_busy <= 1'b0;
                     end else
                         curr_state <= v_EXP_MAX;
                 end  
@@ -307,9 +305,8 @@ module vpu_row (
                         scl_start <= 1'b0;
                     end
                     if (scl_done) begin
-                        v_scaled <= scl_out_vector;
+                        o_scaled <= scl_out_vector;
                         curr_state <= v_SCALE_V;
-                        exp_busy <= 1'b0;
                     end else
                         curr_state <= v_SCALE_O;    
                 end
@@ -325,7 +322,6 @@ module vpu_row (
                     if (scl_done) begin
                         v_scaled <= scl_out_vector;
                         curr_state <= v_UPDATE_O;
-                        exp_busy <= 1'b0;
                     end else
                         curr_state <= v_SCALE_V;    
                 end
@@ -372,8 +368,8 @@ module vpu_row (
                         scl_start <= 1'b0;
                     end
                     if (scl_done) begin
-                        v_scaled <= scl_out_vector;
-                        curr_state <= v_SCALE_V;
+                        o_scaled <= scl_out_vector;
+                        curr_state <= v_ROW_DONE;
                     end else
                         curr_state <= v_SCALE_O;    
                 end
