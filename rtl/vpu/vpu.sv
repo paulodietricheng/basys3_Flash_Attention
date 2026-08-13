@@ -21,17 +21,16 @@
 
 //import fa_pkg::*;
 
-//module vpu (
-//    // mxu
-//    input accumulator_t c [0:SA_ROWS-1][0:SA_COLS-1],
-//    input accumulator_t row_max [0:SA_ROWS-1],
-//    input accumulator_t row_sum [0:SA_ROWS-1],
-//    input logic mxu_done,
+module vpu (
+    // mxu
+    input accumulator_t c [0:SA_ROWS-1][0:SA_COLS-1],
+    input logic vpu_start,
     
-//    // SRAM address generator
-    
-//    // Output data o
-//    output operand_t o [0:SA_ROWS][0:D_MODEL]
-//);
+    // Fetch V
+    input operand_t V [0:SA_COLS-1][0:D_MODEL-1]
+        
+    // Output data o
+    output operand_t O_N [0:SA_ROWS][0:D_MODEL]
+);
 
-//endmodule
+endmodule
