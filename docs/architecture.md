@@ -5,6 +5,10 @@
 This system is a FlashAttention [1] Accelerator targeting the basys3 [2] board designed as a learning experiment and intro 
 to transformers accelerators. It uses a single output-stationary systolic array pass with the goal of computing:
 
+## Major review: THE DMA BLOCK WILL BE DROPPED FOR THE FIRST PROOF-OF-CONCEPT DESIGN AS IT IS NOT CRUCIAL FOR THE MAIN COMPUTE.
+AFTER THE DESIGN IS VERIFIED AND GIVEN THAT DATA EXISTS ATTENTION CAN BE COMPUTED, THEN THE DATA WILL BE FETCHED FROM THE
+EXTERNAL MEMORY/HOST.
+
 $$
 O = \text{softmax}(QK^\top)V
 $$
@@ -87,9 +91,27 @@ Furthermore, there will be a request taker module, that will be responsible for 
 ## VPU
 Has the goal of applying the online softmax algorythim to the Attention Score $S$ produced by the MXU.
 
-It does it by updating the three statistics $m_j$, $l_j$ and $o_j$ for each $j$ row, as refered in the algorithm image. 
+It does it by updating the three statistics $m_i$, $d_i$ and $o_i$ for each $i$ row, as refered in the algorithm image. 
 
 It converts $S$ to FXP12 precision, and implements the $e^x$ function using CompressedLut [4]
+
+The VPU applies row-wise softmax one row at a time. It keeps track of 'SA_ROWS' m, d and o registers, and it has a vpu_row. In this module, the respective m, d and o
+registers are input to 'vpu_row', and then latched, as well as the entire row of scores. Then, for each x_i, it sees, it updates the running registers. Three helper 
+modules were implemented here. 'exp', 'rcp' and 'scl'.
+
+### EXP
+This module is used to apply the exponential function to a given number. It receives as input 'start' and a number, and outputs 'done' and exp(number). It is time
+multiplexed to allow for the reuse of resources. 
+
+### RCP
+This unit is used to compute '1/d_i' needed when normalizing the output vector. It has the same IO block of the exp function, except that it receives a number and returns
+1/number. 
+
+### SCL
+This unit applies the scaling factors `alpha` and `beta` used when computing the unnormalized output. It is time multiplexed to first compute `v_scaled` and then compute
+`o_scaled` to allow for the reuse of the limited DSP slices in the artix 7. 
+
+Additionally, to further save resources, it computes the scaling in groups of elements, instead of the entire vector at a time. 
 
 ## SRAM
 Unified SRAM buffer for storing the $Q_j$, $K_j$, $V_j$ and $O_j$ tiles on chip. (V and O to be added)
@@ -134,19 +156,20 @@ Thus, buffers A and B, which store Q and K will be column-major, and buffers C a
 # Future steps
 
 ## V1
-- Design VPU
 - Design Central Control FSM
-- Design DMA that fills the entire SRAM buffer with the matrix tile, which then will be tiled again in a $\text{SA-LINE} \times d$ tile for use of the systolic array. 
 - Integrate and test
 - Add UART interface with CPU (For simplicity of testing and debugging)
 - Implement and run on basys. 
 
 ## V2
-- Unify SRAM addressing space
-- Change precision from INT8 to BF16
+- Design DMA that fills the entire SRAM buffer with the matrix tile, which then will be tiled again in a $\text{SA-LINE} \times d$ tile for use of the systolic array. 
+- Unify SRAM addressing space. (Maybe, depends on the tradeoffs to be analysed when integrating with the dma). 
 
-## V3
+## V3.0
 - Scale from Basys3 to Alveo U50 with PCIe communication and real HBM2 integration, supporting larger models and arrays (from 8x8 to 64x64)
+
+## V3.1
+- Non-quantized version supporting BF16 format. 
 
 # References
 [1] T. Dao, D. Y. Fu, S. Ermon, A. Rudra, and C. Ré, *FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness*, Advances in Neural Information Processing Systems 35 (NeurIPS 2022), 2022. [Online]. Available: [https://arxiv.org/abs/2205.14135](https://arxiv.org/abs/2205.14135)

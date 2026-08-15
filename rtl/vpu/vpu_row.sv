@@ -296,7 +296,7 @@ module vpu_row (
                     curr_state <= v_SCALE_O;
                 end          
                 
-                v_SCALE_O: begin
+                v_SCALE_V: begin
                 if (!scl_busy) begin
                         scl_start <= 1'b1;
                         scl_in_vector <= V_cur;
@@ -305,13 +305,13 @@ module vpu_row (
                         scl_start <= 1'b0;
                     end
                     if (scl_done) begin
-                        o_scaled <= scl_out_vector;
-                        curr_state <= v_SCALE_V;
+                        v_scaled <= scl_out_vector;
+                        curr_state <= v_SCALE_O;
                     end else
-                        curr_state <= v_SCALE_O;    
+                        curr_state <= v_SCALE_V;    
                 end
                 
-                v_SCALE_V: begin
+                v_SCALE_O: begin
                 if (!scl_busy) begin
                         scl_start <= 1'b1;
                         scl_in_vector <= o_i_minus_1;
@@ -323,7 +323,7 @@ module vpu_row (
                         v_scaled <= scl_out_vector;
                         curr_state <= v_UPDATE_O;
                     end else
-                        curr_state <= v_SCALE_V;    
+                        curr_state <= v_SCALE_O;    
                 end
                 
                 v_UPDATE_O: begin
