@@ -118,13 +118,13 @@ module vpu_row (
     logic rcp_done;    
 
     rcp U_RCP (
-        .clk   (clk),
-        .rst_n (rst_n),
-        .start (rcp_start),
-        .busy  (rcp_busy),
-        .done  (rcp_done),
-        .in    (rcp_in),
-        .out   (rcp_out) 
+        .clk  (clk),
+        .rst_n(rst_n),
+        .start(rcp_start),
+        .busy (rcp_busy),
+        .done (rcp_done),
+        .in   (rcp_in),
+        .out  (rcp_out) 
     );
 
     // SOFTMAX REGISTERS
@@ -218,22 +218,22 @@ module vpu_row (
 
     // States
     typedef enum logic [3:0] {
-        v_IDLE,
-        v_NEW_X,
-        v_MAX,
-        v_EXP_SAFE,
-        v_EXP_MAX,
-        v_UPDATE_D,
-        v_SCALE_O,
-        v_SCALE_V,
-        v_UPDATE_O,
-        v_UPDATE_REG,
-        v_RCP,
-        v_NORM_O,
-        v_ROW_DONE
-    } vpu_state_t;
+        vr_IDLE,
+        vr_NEW_X,
+        vr_MAX,
+        vr_EXP_SAFE,
+        vr_EXP_MAX,
+        vr_UPDATE_D,
+        vr_SCALE_O,
+        vr_SCALE_V,
+        vr_UPDATE_O,
+        vr_UPDATE_REG,
+        vr_RCP,
+        vr_NORM_O,
+        vr_ROW_DONE
+    } vpu_row_state_t;
 
-    vpu_state_t curr_state;
+    vpu_row_state_t curr_state;
 
     // FSM
     always_ff @(posedge clk or negedge rst_n) begin
@@ -242,28 +242,46 @@ module vpu_row (
             vpu_row_done <= 1'b0;
             exp_start <= 1'b0;
             rcp_start <= 1'b0;
+            scl_start <= 1'b0;
+            
+            // Reset output registers
+            out_m_i <= NEG_INF;
+            out_m_i_minus_1 <= NEG_INF;
+
+            out_d_i <= '0;
+            out_d_i_minus_1 <= '0;
+
+            for (int i = 0; i < D_MODEL; i++) begin
+                out_o_norm[i] <= '0;      
+                out_o_i[i] <= '0;   
+                out_o_i_minus_1[i] <= '0;
+            end
+            
+            curr_state <= vr_IDLE;
+            
         end else begin
             
             case (curr_state)
-                v_IDLE: begin
-                    curr_state <= vpu_row_start ? v_MAX : v_IDLE;
+                vr_IDLE: begin
+                    curr_state <= vpu_row_start ? vr_MAX : vr_IDLE;
                     col_idx <= '0;
                     vpu_row_done <= 1'b0;
                     exp_start <= 1'b0;
                     rcp_start <= 1'b0;
+                    scl_start <= 1'b0;
                 end
                 
-                v_NEW_X: begin
+                vr_NEW_X: begin
                     col_idx <= col_idx + 1;
-                    curr_state <= v_MAX;
+                    curr_state <= vr_MAX;
                 end
                 
-                v_MAX: begin
+                vr_MAX: begin
                     m_i <= (x_i_reg[col_idx] > m_i_minus_1) ? x_i_reg[col_idx] : m_i_minus_1;
-                    curr_state <= v_EXP_SAFE;
+                    curr_state <= vr_EXP_SAFE;
                 end
                 
-                v_EXP_SAFE: begin
+                vr_EXP_SAFE: begin
                     if (!exp_busy) begin
                         exp_in <= safe_diff;
                         exp_start <= 1'b1;
@@ -272,12 +290,12 @@ module vpu_row (
                     end
                     if (exp_done) begin
                         exp_safe_diff <= exp_out;
-                        curr_state <= v_EXP_MAX;
+                        curr_state <= vr_EXP_MAX;
                     end else
-                        curr_state <= v_EXP_SAFE;
+                        curr_state <= vr_EXP_SAFE;
                 end     
                  
-                v_EXP_MAX: begin
+                vr_EXP_MAX: begin
                     if (!exp_busy) begin
                         exp_in <= max_diff;
                         exp_start <= 1'b1;
@@ -286,17 +304,17 @@ module vpu_row (
                     end
                     if (exp_done) begin
                         exp_max_diff <= exp_out;
-                        curr_state <= v_UPDATE_D;
+                        curr_state <= vr_UPDATE_D;
                     end else
-                        curr_state <= v_EXP_MAX;
+                        curr_state <= vr_EXP_MAX;
                 end  
                   
-                v_UPDATE_D: begin
+                vr_UPDATE_D: begin
                     d_i <= alpha + beta;
-                    curr_state <= v_SCALE_O;
+                    curr_state <= vr_SCALE_V;
                 end          
                 
-                v_SCALE_V: begin
+                vr_SCALE_V: begin
                 if (!scl_busy) begin
                         scl_start <= 1'b1;
                         scl_in_vector <= V_cur;
@@ -306,12 +324,12 @@ module vpu_row (
                     end
                     if (scl_done) begin
                         v_scaled <= scl_out_vector;
-                        curr_state <= v_SCALE_O;
+                        curr_state <= vr_SCALE_O;
                     end else
-                        curr_state <= v_SCALE_V;    
+                        curr_state <= vr_SCALE_V;    
                 end
                 
-                v_SCALE_O: begin
+                vr_SCALE_O: begin
                 if (!scl_busy) begin
                         scl_start <= 1'b1;
                         scl_in_vector <= o_i_minus_1;
@@ -320,32 +338,32 @@ module vpu_row (
                         scl_start <= 1'b0;
                     end
                     if (scl_done) begin
-                        v_scaled <= scl_out_vector;
-                        curr_state <= v_UPDATE_O;
+                        o_scaled <= scl_out_vector;
+                        curr_state <= vr_UPDATE_O;
                     end else
-                        curr_state <= v_SCALE_O;    
+                        curr_state <= vr_SCALE_O;    
                 end
                 
-                v_UPDATE_O: begin
+                vr_UPDATE_O: begin
                     for (int i = 0; i < D_MODEL; i++) begin 
                         o_i [i] <= o_scaled [i] + v_scaled [i]; 
                     end 
                     
-                    curr_state <= v_UPDATE_REG;                
+                    curr_state <= vr_UPDATE_REG;                
                 end
                 
-                v_UPDATE_REG: begin
+                vr_UPDATE_REG: begin
                     m_i_minus_1 <= m_i;
                     d_i_minus_1 <= d_i;
                     o_i_minus_1 <= o_i;
                     
                     if (col_idx == (SA_COLS-1))
-                        curr_state <= v_RCP;
+                        curr_state <= vr_RCP;
                     else
-                        curr_state <= v_NEW_X;
+                        curr_state <= vr_NEW_X;
                 end
                 
-                v_RCP: begin
+                vr_RCP: begin
                     if (!rcp_busy) begin
                         rcp_in <= d_i;
                         rcp_start <= 1'b1;
@@ -354,12 +372,12 @@ module vpu_row (
                     end
                     if (rcp_done) begin
                         d_inv <= rcp_out;
-                        curr_state <= v_NORM_O;
+                        curr_state <= vr_NORM_O;
                     end else
-                        curr_state <= v_RCP;
+                        curr_state <= vr_RCP;
                 end
                 
-                v_NORM_O: begin
+                vr_NORM_O: begin
                 if (!scl_busy) begin
                         scl_start <= 1'b1;
                         scl_in_vector <= o_i;
@@ -368,13 +386,13 @@ module vpu_row (
                         scl_start <= 1'b0;
                     end
                     if (scl_done) begin
-                        o_scaled <= scl_out_vector;
-                        curr_state <= v_ROW_DONE;
+                        o_norm <= scl_out_vector;
+                        curr_state <= vr_ROW_DONE;
                     end else
-                        curr_state <= v_SCALE_O;    
+                        curr_state <= vr_NORM_O;    
                 end
                 
-                v_ROW_DONE: begin
+                vr_ROW_DONE: begin
                     // Outputs
                     out_o_norm <= o_norm;
                     out_o_i <= o_i;
@@ -386,7 +404,7 @@ module vpu_row (
                     
                     vpu_row_done <= 1'b1;
                                         
-                    curr_state <= v_IDLE;
+                    curr_state <= vr_IDLE;
                 end           
             endcase         
         end
