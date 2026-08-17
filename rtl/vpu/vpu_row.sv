@@ -37,6 +37,7 @@ module vpu_row (
 
     // VPU control
     input  logic vpu_row_start,
+    output logic vpu_row_busy,
     output logic vpu_row_done,
 
     // Input row / running statistics
@@ -67,7 +68,7 @@ module vpu_row (
 );
 
     // CONSTANTS / PARAMETERS
-    localparam accumulator_t NEG_INF = 32'hFF800000;
+    localparam accumulator_t NEG_INF = 32'h80000000;
     localparam int COL_IDX_W = (SA_COLS > 1) ? $clog2(SA_COLS) : 1;
 
     // EXP UNIT
@@ -165,32 +166,6 @@ module vpu_row (
         end
     endgenerate
 
-    // Latch the incoming registers
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            m_i         <= NEG_INF;
-            m_i_minus_1 <= NEG_INF;
-            
-            d_i <= '0; 
-            d_i_minus_1 <= '0;
-            
-            for (int i = 0; i < D_MODEL; i++) begin 
-                o_i [i] <= '0; 
-                o_i_minus_1 [i] <= '0;
-                o_norm [i] <= '0;
-            end
-            
-        end else if (vpu_row_start) begin
-            x_i_reg <= x_i;
-            m_i <= in_m_i;
-            m_i_minus_1 <= in_m_i_minus_1;
-            d_i <= in_d_i;
-            d_i_minus_1 <= in_d_i_minus_1;
-            o_i <= in_o_i;
-            o_i_minus_1 <= in_o_i_minus_1;
-        end
-    end
-
     // Variable computation
     accumulator_t max_diff;
     assign max_diff  = m_i_minus_1 - m_i;
@@ -219,7 +194,6 @@ module vpu_row (
     // States
     typedef enum logic [3:0] {
         vr_IDLE,
-        vr_NEW_X,
         vr_MAX,
         vr_EXP_SAFE,
         vr_EXP_MAX,
@@ -228,6 +202,7 @@ module vpu_row (
         vr_SCALE_V,
         vr_UPDATE_O,
         vr_UPDATE_REG,
+        vr_NEW_X,
         vr_RCP,
         vr_NORM_O,
         vr_ROW_DONE
@@ -239,41 +214,58 @@ module vpu_row (
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin       
             col_idx <= '0;
+            vpu_row_busy <= 1'b0;
             vpu_row_done <= 1'b0;
             exp_start <= 1'b0;
             rcp_start <= 1'b0;
             scl_start <= 1'b0;
             
-            // Reset output registers
-            out_m_i <= NEG_INF;
+            m_i         <= NEG_INF;
+            m_i_minus_1 <= NEG_INF;
+            
+            d_i <= '0; 
+            d_i_minus_1 <= '0;
+            
+            for (int i = 0; i < D_MODEL; i++) begin 
+                o_i [i] <= '0; 
+                o_i_minus_1 [i] <= '0;
+                o_norm [i] <= '0;
+            end  
+            
+            out_m_i         <= NEG_INF;
             out_m_i_minus_1 <= NEG_INF;
-
-            out_d_i <= '0;
+            
+            out_d_i <= '0; 
             out_d_i_minus_1 <= '0;
-
-            for (int i = 0; i < D_MODEL; i++) begin
-                out_o_norm[i] <= '0;      
-                out_o_i[i] <= '0;   
-                out_o_i_minus_1[i] <= '0;
-            end
             
-            curr_state <= vr_IDLE;
+            for (int i = 0; i < D_MODEL; i++) begin 
+                out_o_i [i] <= '0; 
+                out_o_i_minus_1 [i] <= '0;
+                out_o_norm [i] <= '0;
+            end  
             
+            curr_state <= vr_IDLE;          
         end else begin
-            
+            $display("Time=%0t State=%s col_idx=%0d m_i=%0d d_i=%0d exp_done=%b scl_done=%b rcp_done=%b", 
+                     $time, curr_state.name(), col_idx, m_i, d_i, exp_done, scl_done, rcp_done);           
             case (curr_state)
                 vr_IDLE: begin
-                    curr_state <= vpu_row_start ? vr_MAX : vr_IDLE;
+                    if (vpu_row_start) begin
+                        vpu_row_busy <= 1'b1;
+                        x_i_reg     <= x_i;
+                        m_i         <= in_m_i;
+                        m_i_minus_1 <= in_m_i_minus_1;
+                        d_i         <= in_d_i;
+                        d_i_minus_1 <= in_d_i_minus_1;
+                        o_i         <= in_o_i;
+                        o_i_minus_1 <= in_o_i_minus_1;
+                        curr_state  <= vr_MAX;
+                    end
                     col_idx <= '0;
                     vpu_row_done <= 1'b0;
                     exp_start <= 1'b0;
                     rcp_start <= 1'b0;
                     scl_start <= 1'b0;
-                end
-                
-                vr_NEW_X: begin
-                    col_idx <= col_idx + 1;
-                    curr_state <= vr_MAX;
                 end
                 
                 vr_MAX: begin
@@ -318,7 +310,7 @@ module vpu_row (
                 if (!scl_busy) begin
                         scl_start <= 1'b1;
                         scl_in_vector <= V_cur;
-                        scl_in_scalar <= alpha;
+                        scl_in_scalar <= beta;
                     end else begin
                         scl_start <= 1'b0;
                     end
@@ -330,10 +322,10 @@ module vpu_row (
                 end
                 
                 vr_SCALE_O: begin
-                if (!scl_busy) begin
+                    if (!scl_busy) begin
                         scl_start <= 1'b1;
                         scl_in_vector <= o_i_minus_1;
-                        scl_in_scalar <= beta;
+                        scl_in_scalar <= alpha;
                     end else begin
                         scl_start <= 1'b0;
                     end
@@ -361,6 +353,11 @@ module vpu_row (
                         curr_state <= vr_RCP;
                     else
                         curr_state <= vr_NEW_X;
+                end
+                
+                vr_NEW_X: begin
+                    col_idx <= col_idx + 1;
+                    curr_state <= vr_MAX;
                 end
                 
                 vr_RCP: begin
@@ -402,6 +399,7 @@ module vpu_row (
                     out_m_i <= m_i;
                     out_m_i_minus_1 <= m_i_minus_1;
                     
+                    vpu_row_busy <= 1'b0;
                     vpu_row_done <= 1'b1;
                                         
                     curr_state <= vr_IDLE;

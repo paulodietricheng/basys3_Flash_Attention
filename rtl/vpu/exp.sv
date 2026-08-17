@@ -30,17 +30,55 @@ module exp (
 );
     // Register the request
     logic [31:0] in_reg;
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n)
-            in_reg <= 1'b0;
-        else if (start)
-            in_reg <= in;
-    end
     
-    // Placeholder computation
+    // States
+    typedef enum logic [1:0] {
+        e_IDLE,
+        e_COMPUTE,
+        e_DONE
+    } exp_state_t ;
+    
+    exp_state_t curr_state;
+    
+    // Place holder computation
     always_ff @(posedge clk) begin
-        out <= (in_reg << 1) + 1;
-        done <= 1'b1;
-    end    
-
+        if (!rst_n) begin
+            in_reg <= 1'b0;
+            
+            busy <= 1'b0;
+            done <= 1'b0;
+            
+            out <= '0;
+            
+            curr_state <= e_IDLE;
+        end else begin
+            case (curr_state)
+                e_IDLE: begin
+                    in_reg <= 1'b0;
+            
+                    busy <= 1'b0;
+                    done <= 1'b0;
+                    
+                    out <= '0;
+                    
+                    if (start) begin
+                        in_reg <= in;
+                        busy <= 1'b1;
+                        curr_state <= e_COMPUTE;
+                    end
+                end
+                
+                e_COMPUTE: begin
+                    out  <= in_reg + 1;
+                    curr_state <= e_DONE;               
+                end
+                
+                e_DONE: begin
+                    busy <= 1'b0;
+                    done <= 1'b1;
+                    curr_state <= e_IDLE;
+                end
+            endcase
+        end
+    end
 endmodule
