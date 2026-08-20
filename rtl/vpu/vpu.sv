@@ -123,16 +123,19 @@ module vpu (
     logic vf_start;
     logic vf_busy;
     logic vf_done;
+    
+    operand_t v_mbd [WPA*NUM_PORTS];
     operand_t v_tile [SA_ROWS][D_MODEL];
     
-    v_fetch U_VF (
-        .clk (clk),
-        .rst_n(rst_n),
-        .vf_idx(vf_idx),
+    vpu_v_fetch U_VF (
+        .clk     (clk),
+        .rst_n   (rst_n),
+        .vf_idx  (vf_idx),
         .vf_start(vf_start),
-        .vf_busy(vf_busy),
-        .vf_done(vf_done),
-        .v_tile (v_tile)
+        .vf_busy (vf_busy),
+        .vf_done (vf_done),
+        .v_mbd   (v_mbd),
+        .v_tile  (v_tile)
     );
     
     typedef enum logic [2:0]{
