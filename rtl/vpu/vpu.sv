@@ -27,11 +27,7 @@ module vpu (
     // mxu
     input accumulator_t scores [0:SA_ROWS-1][0:SA_COLS-1],
     input logic vpu_start,
-    
-    // Fetch V_tile
-    input operand_t V [0:SA_COLS-1][0:D_MODEL-1],
-    // SRAM ADDRESSING
-    
+            
     // Output data o
     output operand_t O_N [0:SA_ROWS][0:D_MODEL],
     output logic     vpu_done
@@ -122,10 +118,28 @@ module vpu (
         .out_o_norm     (out_o_norm)
     );
     
-    typedef enum logic [1:0]{
+    // V_fetcher instantiation    
+    logic [V_IDX_W-1:0] vf_idx;
+    logic vf_start;
+    logic vf_busy;
+    logic vf_done;
+    operand_t v_tile [SA_ROWS][D_MODEL];
+    
+    v_fetch U_VF (
+        .clk (clk),
+        .rst_n(rst_n),
+        .vf_idx(vf_idx),
+        .vf_start(vf_start),
+        .vf_busy(vf_busy),
+        .vf_done(vf_done),
+        .v_tile (v_tile)
+    );
+    
+    typedef enum logic [2:0]{
         v_IDLE,
-        v_NEXT_ROW,
+        v_FETCH_V,
         v_COMPUTE_ROW,  
+        v_NEXT_ROW,
         v_DONE
     } vpu_state_t ;
     
@@ -144,6 +158,8 @@ module vpu (
             curr_state <= v_IDLE;
     
             row_idx    <= '0;
+            vf_idx     <= '0;
+            
             vpu_row_start <= 1'b0;
             vpu_done      <= 1'b0;
     
@@ -193,7 +209,8 @@ module vpu (
                     if (vpu_start) begin
     
                         row_idx <= '0;
-    
+                        vf_idx <= '0;
+                        
                         // Latch the input
                         x_reg <= scores;
     
@@ -209,8 +226,23 @@ module vpu (
                             in_o_i_minus_1[i] <= '0;
                         end
     
-                        curr_state <= v_COMPUTE_ROW;
+                        curr_state <= v_FETCH_V;
                     end
+                end
+                
+                v_FETCH_V: begin
+                if (!vf_busy) begin
+                        vf_start <= 1'b1;
+                        vf_idx <= 0;
+                    end else begin
+                        vf_start <= 1'b0;
+                        vf_idx <= vf_idx + 1;
+                    end
+                    if (vf_done) begin
+                        V_reg <= v_tile;
+                        curr_state <= v_COMPUTE_ROW;
+                    end else
+                        curr_state <= v_FETCH_V;    
                 end
     
                 v_COMPUTE_ROW: begin

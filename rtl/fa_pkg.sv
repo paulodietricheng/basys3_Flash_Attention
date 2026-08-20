@@ -41,6 +41,7 @@ package fa_pkg;
     localparam NUM_PORTS = 2;
     localparam BRAM_WORD_W = 32;
     localparam BRAM_DEPTH  = 1024;
+    localparam WPA = BRAM_WORD_W / OPERAND_W;
     
     // Capacity of one BRAM primitive
     localparam BRAM_BYTE_COUNT = BRAM_DEPTH * (BRAM_WORD_W / 8);
@@ -144,6 +145,18 @@ package fa_pkg;
         
     } mxu_cmd_t ;
     
+    // Systolic latency parameter
+    localparam DSP_LAT = 4;
+
+    // Total result latency from first PE token to final valid result.
+    localparam RESULT_LAT_W = $clog2(2*SA_ROWS + SA_COLS + D_MODEL - 2);
+
+    // Scalar data types
+    typedef logic signed [OPERAND_W-1:0] operand_t;
+    typedef logic signed [ACC_W-1:0]     accumulator_t;
+    typedef logic [SRAM_WORD_W-1:0]      sram_word_t;
+    typedef logic [BRAM_WORD_W-1:0]      bram_word_t;
+    
     // DMA request
     typedef struct packed {
         logic direction; // 0 = HBM -> SRAM, 1 = SRAM -> HBM
@@ -166,16 +179,10 @@ package fa_pkg;
         logic [HBM_ADDR_W-1:0] hbm_stride;        
         
     } dma_rq_t ;
+    
+    // VPU
+    localparam row_idx_w = $clog2(SA_ROWS);
+    localparam colg_idx_w = $clog2(D_MODEL / (NUM_PORTS * WPA));
+    localparam V_IDX_W = row_idx_w + colg_idx_w;
 
-    // Systolic latency parameter
-    localparam DSP_LAT = 4;
-
-    // Total result latency from first PE token to final valid result.
-    localparam RESULT_LAT_W = $clog2(2*SA_ROWS + SA_COLS + D_MODEL - 2);
-
-    // Scalar data types
-    typedef logic signed [OPERAND_W-1:0] operand_t;
-    typedef logic signed [ACC_W-1:0]     accumulator_t;
-    typedef logic [SRAM_WORD_W-1:0]      sram_word_t;
-    typedef logic [BRAM_WORD_W-1:0]      bram_word_t;
 endpackage

@@ -261,6 +261,7 @@ module vpu_row (
                         o_i_minus_1 <= in_o_i_minus_1;
                         curr_state  <= vr_MAX;
                     end
+                    
                     col_idx <= '0;
                     vpu_row_done <= 1'b0;
                     exp_start <= 1'b0;
