@@ -4,104 +4,100 @@ import fa_pkg::*;
 
 module vpu_v_fetch (
     input  logic clk,
-    input logic rst_n,
+    input  logic rst_n,
 
+    // ------------------------------------------------------------
     // V fetch index
     //
-    // vf_idx[3:1] = row index
-    // vf_idx[0]   = dimension iteration
+    // vf_idx[3:1] = row
+    // vf_idx[0]   = iteration
     //
-    // 0:  V[0][0:7]
-    // 1:  V[0][8:15]
-    // 2:  V[1][0:7]
-    // 3:  V[1][8:15]
+    // For an 8x16 V tile:
+    //
+    // 0  -> V[0][0:7]
+    // 1  -> V[0][8:15]
+    // 2  -> V[1][0:7]
+    // 3  -> V[1][8:15]
     // ...
-    // 14: V[7][0:7]
-    // 15: V[7][8:15]
+    // 14 -> V[7][0:7]
+    // 15 -> V[7][8:15]
+    //
+    // vf_idx is sent to the address generator, which drives the
+    // SRAM. The SRAM has one-cycle latency.
+    // ------------------------------------------------------------
+
     input logic [V_IDX_W-1:0] vf_idx,
 
     input  logic vf_start,
     output logic vf_busy,
     output logic vf_done,
 
-    // Data returned from SRAM.
+    // ------------------------------------------------------------
+    // SRAM data
     //
-    // Each SRAM port provides WPA operands, so NUM_PORTS*WPA
-    // operands arrive per cycle.
+    // NUM_PORTS SRAM ports, WPA operands per port.
+    //
+    // Total operands received per cycle:
+    //
+    //     NUM_PORTS * WPA
+    //
+    // Example:
+    //     NUM_PORTS = 2
+    //     WPA       = 4
+    //     => 8 operands/cycle
+    // ------------------------------------------------------------
+
     input operand_t v_mbd [NUM_PORTS*WPA],
 
+    // ------------------------------------------------------------
     // Complete V tile
+    // ------------------------------------------------------------
+
     output operand_t v_tile [SA_ROWS][D_MODEL]
 );
-
-    // ============================================================
-    // Parameters
-    // ============================================================
-
     localparam int NUM_OPERANDS = NUM_PORTS * WPA;
 
-    // Number of dimensions loaded in each iteration.
+    // Number of dimensions loaded by one SRAM fetch.
     localparam int DIMS_PER_ITER = NUM_OPERANDS;
 
-    // Number of iterations required to load one row.
-    localparam int NUM_ITERS =
-        (D_MODEL + DIMS_PER_ITER - 1) / DIMS_PER_ITER;
+    // Number of fetches required per row.
+    localparam int NUM_ITERS = (D_MODEL + DIMS_PER_ITER - 1) / DIMS_PER_ITER;
 
-    // ============================================================
-    // Index decoding
-    // ============================================================
+    // Total number of fetches for the entire tile.
+    localparam int TOTAL_FETCHES = SA_ROWS * NUM_ITERS;
 
-    // vf_idx = {row_idx, iter_idx}
-    //
-    // For the intended 8x16 tile:
-    //
-    // vf_idx[3:1] = row
-    // vf_idx[0]   = iteration
-    //
-    logic [V_IDX_W-1:0] row_idx;
-    logic               iter_idx;
+    logic [V_IDX_W-1:0] vf_idx_d;
 
-    assign row_idx  = vf_idx[V_IDX_W-1:1];
-    assign iter_idx = vf_idx[0];
+    logic vf_idx_valid_d;
 
-    // Starting dimension for this fetch.
-    //
-    // iteration 0 -> 0
-    // iteration 1 -> NUM_OPERANDS
-    //
-    localparam int OFFSET_W =
-        (D_MODEL <= 1) ? 1 : $clog2(D_MODEL);
+    logic [V_IDX_W-2:0] row_idx_d;
+    logic               iter_idx_d;
 
-    logic [OFFSET_W-1:0] dim_offset;
+    assign row_idx_d  = vf_idx_d[V_IDX_W-1:1];
+    assign iter_idx_d = vf_idx_d[0];
 
-    assign dim_offset =
-        iter_idx ? DIMS_PER_ITER : 0;
+    localparam int OFFSET_W = (D_MODEL <= 1) ? 1 : $clog2(D_MODEL);
 
+    logic [OFFSET_W-1:0] dim_offset_d;
 
-    // ============================================================
-    // FSM
-    // ============================================================
+    assign dim_offset_d = iter_idx_d ? DIMS_PER_ITER : 0;
 
     typedef enum logic [1:0] {
         VF_IDLE,
-        VF_LOAD,
-        VF_DONE
+        VF_LOAD
     } vf_state_t;
 
     vf_state_t state;
 
-
-    // ============================================================
-    // Main control
-    // ============================================================
-
     always_ff @(posedge clk or negedge rst_n) begin
-
         if (!rst_n) begin
+            state          <= VF_IDLE;
 
-            state   <= VF_IDLE;
-            vf_busy <= 1'b0;
-            vf_done <= 1'b0;
+            vf_busy        <= 1'b0;
+            vf_done        <= 1'b0;
+
+            vf_idx_d       <= '0;
+            vf_idx_valid_d <= 1'b0;
 
             // Clear V tile
             for (int r = 0; r < SA_ROWS; r++) begin
@@ -109,140 +105,58 @@ module vpu_v_fetch (
                     v_tile[r][d] <= '0;
                 end
             end
-
         end else begin
-
-            // ----------------------------------------------------
-            // Defaults
-            // ----------------------------------------------------
-
             vf_done <= 1'b0;
-
 
             case (state)
 
-                // =================================================
-                // IDLE
-                // =================================================
-
                 VF_IDLE: begin
-
-                    vf_busy <= 1'b0;
+                    vf_busy        <= 1'b0;
+                    vf_idx_valid_d <= 1'b0;
 
                     if (vf_start) begin
-
                         vf_busy <= 1'b1;
-                        state   <= VF_LOAD;
 
+                        vf_idx_d       <= vf_idx;
+                        vf_idx_valid_d <= 1'b1;
+
+                        state <= VF_LOAD;
                     end
-
                 end
-
-
-                // =================================================
-                // LOAD
-                // =================================================
-                //
-                // One fetch occurs every cycle.
-                //
-                // vf_idx identifies where v_mbd belongs.
-                //
-                // Example:
-                //
-                // vf_idx = 4'b0101
-                //
-                // row_idx  = 3'b010 = row 2
-                // iter_idx = 1      = dimensions 8:15
-                //
-                // Therefore:
-                //
-                // v_mbd[0] -> V[2][8]
-                // v_mbd[1] -> V[2][9]
-                // ...
-                //
-                // =================================================
 
                 VF_LOAD: begin
-
                     vf_busy <= 1'b1;
-
-                    // ------------------------------------------------
-                    // Store incoming operands into V tile.
-                    //
-                    // NUM_OPERANDS is normally 8:
-                    //
-                    // v_mbd[0] -> first dimension
-                    // v_mbd[1] -> second dimension
-                    // ...
-                    // v_mbd[7] -> eighth dimension
-                    // ------------------------------------------------
-
-                    for (int i = 0; i < NUM_OPERANDS; i++) begin
-
-                        if ((dim_offset + i) < D_MODEL) begin
-
-                            v_tile[row_idx][dim_offset + i]
-                                <= v_mbd[i];
-
+                    if (vf_idx_valid_d) begin
+                        for (int i = 0; i < NUM_OPERANDS; i++) begin
+                            if ((dim_offset_d + i) < D_MODEL) begin
+                                v_tile[row_idx_d][dim_offset_d + i] <= v_mbd[i];
+                            end
                         end
+                        if (vf_idx_d == V_IDX_W'(TOTAL_FETCHES - 1)) begin
+                            vf_busy        <= 1'b0;
+                            vf_done        <= 1'b1;
+                            vf_idx_valid_d <= 1'b0;
 
+                            state <= VF_IDLE;
+                        end
                     end
-
-
-                    // ------------------------------------------------
-                    // Last fetch?
-                    //
-                    // For the intended 8x16 case:
-                    //
-                    // vf_idx = 15
-                    //
-                    // means:
-                    //
-                    // row  = 7
-                    // iter = 1
-                    //
-                    // which is V[7][8:15].
-                    // ------------------------------------------------
-
-                    if (vf_idx == V_IDX_W'(SA_ROWS * NUM_ITERS - 1)) begin
-
-                        state <= VF_DONE;
-
+                if (vf_idx_valid_d && (vf_idx_d != V_IDX_W'(TOTAL_FETCHES - 1))) begin
+                        vf_idx_d       <= vf_idx;
+                        vf_idx_valid_d <= 1'b1;
                     end
-
                 end
-
-
-                // =================================================
-                // DONE
-                // =================================================
-
-                VF_DONE: begin
-
-                    vf_busy <= 1'b0;
-                    vf_done <= 1'b1;
-
-                    state <= VF_IDLE;
-
-                end
-
 
                 // =================================================
                 // Default
                 // =================================================
-
                 default: begin
-
-                    state   <= VF_IDLE;
-                    vf_busy <= 1'b0;
-                    vf_done <= 1'b0;
-
+                    state          <= VF_IDLE;
+                    vf_busy        <= 1'b0;
+                    vf_done        <= 1'b0;
+                    vf_idx_d       <= '0;
+                    vf_idx_valid_d <= 1'b0;
                 end
-
             endcase
-
         end
-
     end
-
 endmodule
