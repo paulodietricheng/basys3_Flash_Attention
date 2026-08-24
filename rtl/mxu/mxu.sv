@@ -33,11 +33,11 @@ module mxu(
     input mxu_cmd_t mxu_cmd,
     
     // to sram  
-    output logic mxu_using_mem,  
+    output logic mxu_using_mem [2],  
     
     // External wires for Operand handler
-    input  operand_t [SA_ROWS-1:0] in_a,
-    input  operand_t [SA_COLS-1:0] in_b,
+    input  sram_word_t in_a [NUM_PORTS],
+    input  sram_word_t in_b [NUM_PORTS],
     output k_dim_t a_k_rd_idx,
     output k_dim_t b_k_rd_idx,
     

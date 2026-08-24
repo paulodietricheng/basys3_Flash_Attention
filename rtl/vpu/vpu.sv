@@ -28,8 +28,15 @@ module vpu (
     input accumulator_t scores [0:SA_ROWS-1][0:SA_COLS-1],
     input logic vpu_start,
             
+    // SRAM
+    input operand_t v_mbd [WPA*NUM_PORTS],
+    
+    // SRAM ADDR GEN
+    output logic [V_IDX_W-1:0] vf_idx_out,      
+    output logic vpu_using_mem,
+       
     // Output data o
-    output operand_t O_N [0:SA_ROWS][0:D_MODEL],
+    output operand_t O_N [0:SA_ROWS-1][0:D_MODEL-1],
     output logic     vpu_done
 );
     localparam accumulator_t NEG_INF = 32'h80000000;
@@ -124,19 +131,21 @@ module vpu (
     logic vf_busy;
     logic vf_done;
     
-    operand_t v_mbd [WPA*NUM_PORTS];
+    assign vpu_using_mem = vf_busy;
+    
     operand_t v_tile [SA_ROWS][D_MODEL];
     
     vpu_v_fetch U_VF (
-        .clk     (clk),
-        .rst_n   (rst_n),
-        .vf_idx  (vf_idx),
-        .vf_start(vf_start),
-        .vf_busy (vf_busy),
-        .vf_done (vf_done),
-        .v_mbd   (v_mbd),
-        .v_tile  (v_tile)
-    );
+        .clk       (clk),
+        .rst_n     (rst_n),
+        .vf_idx    (vf_idx),
+        .vf_idx_out(vf_idx_out),
+        .vf_start  (vf_start),
+        .vf_busy   (vf_busy),
+        .vf_done   (vf_done),
+        .v_mbd     (v_mbd),
+        .v_tile    (v_tile)
+    ); 
     
     typedef enum logic [2:0]{
         v_IDLE,

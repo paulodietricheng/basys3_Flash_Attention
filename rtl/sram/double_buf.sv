@@ -24,8 +24,8 @@ import fa_pkg::*;
 module double_buf(
     input logic clk,
 
-    // DMA
-    input logic dma_using_mem,
+//    // DMA
+//    input logic dma_using_mem,
     input sram_word_t din [NUM_PORTS],
     input logic [SRAM_ADDR_W-1:0] wr_addr [NUM_PORTS],
 
@@ -46,7 +46,7 @@ module double_buf(
     output sram_word_t dout [NUM_PORTS]
 );
 
-    assign busy = mxu_using_mem | vpu_using_mem | dma_using_mem;
+    assign busy = mxu_using_mem | vpu_using_mem;
 
     sram_word_t bank0_dout [NUM_PORTS];
     sram_word_t bank1_dout [NUM_PORTS];

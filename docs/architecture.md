@@ -1,28 +1,26 @@
-# Architectural decisions for FlashAttention acceleration
-#### By Paulo Dietrich, July 29 2026
+# Architectural decisions for FlashAttention acceleration, rev 1
+#### By Paulo Dietrich, Aug 24th, 2026
 
 # Overview
 This system is a FlashAttention [1] Accelerator targeting the basys3 [2] board designed as a learning experiment and intro 
 to transformers accelerators. It uses a single output-stationary systolic array pass with the goal of computing:
-
-## Major review: THE DMA BLOCK WILL BE DROPPED FOR THE FIRST PROOF-OF-CONCEPT DESIGN AS IT IS NOT CRUCIAL FOR THE MAIN COMPUTE.
-AFTER THE DESIGN IS VERIFIED AND GIVEN THAT DATA EXISTS ATTENTION CAN BE COMPUTED, THEN THE DATA WILL BE FETCHED FROM THE
-EXTERNAL MEMORY/HOST.
 
 $$
 O = \text{softmax}(QK^\top)V
 $$
 
 # Architecture
-The design consists of 6 main modules: Controller, DMA, SRAM Controller, SRAM, Matrix Multiplication Unit (MXU), Vector Processing Unit
+The design consists of 6 main modules: Flash Attention Controller, DMA, SRAM Controller, SRAM, Matrix Multiplication Unit (MXU), Vector Processing Unit
 (VPU). The design runs on a quantized INT8 model, with convertion for FXP12 for the VPU.
+
+## Rev 1: The DMA Shall be implemented in V2, as it is not needed in the proof-of-concept version. 
 
 ![Top Block Diagram](images/fa_bd.png)
 
-## Control
-Is responsible for the communication between the CPU and the accelerator. It also sends DMA requests, MXU requests and acts as a tile scheduler. 
+## Flash Attention Control
+Is responsible for scheduling the tiles and starting the MXU. Will also be responsible for CPU interface and DMA requesting.
 
-It aims to implement the following algorithm
+It aims to implement the following algorithm:
 
 ![Top Block Diagram](images/fa_eq.png)
 
@@ -156,14 +154,16 @@ Thus, buffers A and B, which store Q and K will be column-major, and buffers C a
 # Future steps
 
 ## V1
-- Design Central Control FSM
+- Design Flash Attention Control FSM to loop over the internal on-chip tiles. 
+- Change the format from INT8 to Q4.4, reducing the precision, but making an easier integration to non-linear units such as the exp unit and the reciprocral unit. 
 - Integrate and test
-- Add UART interface with CPU (For simplicity of testing and debugging)
 - Implement and run on basys. 
 
 ## V2
 - Design DMA that fills the entire SRAM buffer with the matrix tile, which then will be tiled again in a $\text{SA-LINE} \times d$ tile for use of the systolic array. 
+- Update the Flash Attention Control to interface with the DMA, and loop over the larger matrices outside the chip.
 - Unify SRAM addressing space. (Maybe, depends on the tradeoffs to be analysed when integrating with the dma). 
+- Add UART interface with CPU (For simplicity of testing and debugging)
 
 ## V3.0
 - Scale from Basys3 to Alveo U50 with PCIe communication and real HBM2 integration, supporting larger models and arrays (from 8x8 to 64x64)

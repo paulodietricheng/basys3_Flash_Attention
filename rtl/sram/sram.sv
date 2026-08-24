@@ -40,9 +40,8 @@ module sram (
     output sram_word_t dout [NUM_BUF][NUM_PORTS],
 
     // Busy signals
-    input logic mxu_using_mem [NUM_BUF],
-    input logic vpu_using_mem [NUM_BUF],
-    input logic dma_using_mem [NUM_BUF],
+    input logic mxu_using_mem,
+    input logic vpu_using_mem,
 
     output logic busy [NUM_BUF]
 );
@@ -55,9 +54,9 @@ module sram (
                 .din          (din[i]),
                 .read_bank    (read_bank[i]),
                 .busy         (busy[i]),
-                .dma_using_mem(dma_using_mem[i]),
-                .mxu_using_mem(mxu_using_mem[i]),
-                .vpu_using_mem(vpu_using_mem[i]),
+                .dma_using_mem(dma_using_mem),
+                .mxu_using_mem(mxu_using_mem),
+                .vpu_using_mem(vpu_using_mem),
                 .rd_addr      (rd_addr[i]),
                 .wr_addr      (wr_addr[i]),
                 .dout         (dout[i])

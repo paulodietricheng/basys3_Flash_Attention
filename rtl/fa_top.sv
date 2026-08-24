@@ -21,118 +21,100 @@
 
 import fa_pkg::*;
 
-module fa_top(
-    input clk, rst_n    
+module fa_top (
+    input clk, rst_n
 );
 
+    // TODO (Q4): no central FSM instantiated yet - these are stubs
+    // until fa_control (or equivalent) lands here.
+    logic       mxu_start;
+    logic       mxu_done;
+    mxu_cmd_t   mxu_cmd;
+    logic       vpu_start;
+    logic       vpu_done;
+
     // -----------------
-    // MXU declaration
+    // MXU
     // -----------------
-    
-    // External signals for central control
-    logic mxu_start;
-    logic mxu_busy;
-    logic mxu_done;  
-    logic mxu_reading_ram;
-    
-    // External wires for Operand handler
-    operand_bus_t in_a;
-    operand_bus_t in_b;   
-    dim_t dim_to_fetch;
-    
-    assign in_a = {bufA_dout_b, bufA_dout_a};
-    assign in_b = {bufB_dout_b, bufB_dout_a};
-    
-    // External wires for Systolic Array
+    logic   mxu_using_mem;
+    k_dim_t a_k_rd_idx;
+    k_dim_t b_k_rd_idx;
+
+    sram_word_t in_a [NUM_PORTS];
+    sram_word_t in_b [NUM_PORTS];
+
     accumulator_t c [0:SA_ROWS-1][0:SA_COLS-1];
-    accumulator_t row_max [0:SA_ROWS-1];
-    
+
     mxu U_MXU (
-        .clk(clk),
-        .rst_n(rst_n),
-        .mxu_start(start),
-        .mxu_busy(busy),
-        .mxu_done(done),
-        .in_a(in_a),
-        .in_b(in_b),
-        .dim_to_fetch(dim_to_fetch),
-        .c(c),
-        .row_max(row_max),
-        .mxu_reading_ram(mxu_reading_ram)
+        .clk          (clk),
+        .rst_n        (rst_n),
+        .mxu_start    (mxu_start),
+        .mxu_done     (mxu_done),
+        .mxu_cmd      (mxu_cmd),
+        .mxu_using_mem(mxu_using_mem),
+        .in_a         (in_a),
+        .in_b         (in_b),
+        .a_k_rd_idx   (a_k_rd_idx),
+        .b_k_rd_idx   (b_k_rd_idx),
+        .c            (c)
     );
 
-    // ------------------
-    // SRAM declaration
-    // ------------------
+    // -----------------
+    // VPU
+    // -----------------
+    // TODO (Q1 again): same sram_word_t -> operand_t gap for v_mbd.
+    sram_word_t v_mbd_word [NUM_PORTS];
 
-    // SRAM data input
-    sram_word_t dinA_a;
-    sram_word_t dinA_b;
-    sram_word_t dinB_a;
-    sram_word_t dinB_b;
-    
-    // SRAM data address
-    logic [ADDR_W-1:0] bufA_rd_addr_a;
-    logic [ADDR_W-1:0] bufA_rd_addr_b;
-    logic [ADDR_W-1:0] bufB_rd_addr_a;
-    logic [ADDR_W-1:0] bufB_rd_addr_b;
-    logic [ADDR_W-1:0] bufA_wr_addr_a;
-    logic [ADDR_W-1:0] bufA_wr_addr_b;
-    logic [ADDR_W-1:0] bufB_wr_addr_a;
-    logic [ADDR_W-1:0] bufB_wr_addr_b;
-    
-    // SRAM controller
-    logic bufA_read_ram;
-    logic bufB_read_ram;
-    
-    // SRAM data output 
-    sram_word_t bufA_dout_a;
-    sram_word_t bufA_dout_b;
-    sram_word_t bufB_dout_a;
-    sram_word_t bufB_dout_b;
-    
+    // NOTE: assumes bug 10 fixed (vf_idx_out sized [V_IDX_W-1:0]).
+    logic [V_IDX_W-1:0] vf_idx_out;
+    operand_t O_N [0:SA_ROWS][0:D_MODEL];
+
+    vpu U_VPU (
+        .clk       (clk),
+        .rst_n     (rst_n),
+        .scores    (c),
+        .vpu_start (vpu_start),
+        .v_mbd     (v_mbd),
+        .vf_idx_out(vf_idx_out),
+        .O_N       (O_N),
+        .vpu_done  (vpu_done)
+    );
+
+    // -----------------
+    // SRAM
+    // -----------------
+    sram_word_t din       [NUM_BUF][NUM_PORTS]; // TODO (Q3): no DMA instantiated -> undriven
+    logic       read_bank [NUM_BUF];
+    logic [SRAM_ADDR_W-1:0] wr_addr [NUM_BUF][NUM_PORTS]; // TODO (Q3): undriven, no DMA
+    logic [SRAM_ADDR_W-1:0] rd_addr [NUM_BUF][NUM_PORTS];
+    sram_word_t dout      [NUM_BUF][NUM_PORTS];
+
+    logic mxu_using_mem; 
+    logic vpu_using_mem_buf [NUM_BUF]; // TODO (Q2): vpu has no using_mem output at all yet
+    logic sram_busy         [NUM_BUF];
+
     sram U_SRAM (
-        .clk(clk),
-        .dinA_a(dinA_a),
-        .dinA_b(dinA_b),
-        .dinB_a(dinB_a),
-        .dinB_b(dinB_b),
-        .bufA_read_ram(bufA_read_ram),
-        .bufB_read_ram(bufB_read_ram),
-        .bufA_rd_addr_a(bufA_rd_addr_a),
-        .bufA_rd_addr_b(bufA_rd_addr_b),
-        .bufB_rd_addr_a(bufB_rd_addr_a),
-        .bufB_rd_addr_b(bufB_rd_addr_b),
-        .bufA_wr_addr_a(bufA_wr_addr_a),
-        .bufA_wr_addr_b(bufA_wr_addr_b),
-        .bufB_wr_addr_a(bufB_wr_addr_a),
-        .bufB_wr_addr_b(bufB_wr_addr_b), 
-        .bufA_dout_a(bufA_dout_a),  
-        .bufA_dout_b(bufA_dout_b),  
-        .bufB_dout_a(bufB_dout_a),  
-        .bufB_dout_b(bufB_dout_b)  
+        .clk          (clk),
+        .din          (din),
+        .read_bank    (read_bank),
+        .wr_addr      (wr_addr),
+        .rd_addr      (rd_addr),
+        .dout         (dout),
+        .mxu_using_mem(mxu_using_mem_buf),
+        .vpu_using_mem(vpu_using_mem_buf),
+        .busy         (sram_busy)
     );
-    
-    // -----------------------------
-    // sram_controller declaration
-    // -----------------------------
-    
-    logic Atile_advance;
-    logic dmaB_wr_done;
-    
+
+    // -----------------
+    // sram_ctrl
+    // -----------------
     sram_ctrl U_SCTRL (
-        .clk(clk),
-        .rst_n(rst_n),
-        .Atile_advance  (Atile_advance),
-        .dmaB_wr_done   (dmaB_wr_done),
-        .mxu_reading_ram(mxu_reading_ram),
-        .bufA_read_ram  (bufA_read_ram),
-        .bufB_read_ram  (bufB_read_ram),
-        .dim_to_fetch   (dim_to_fetch),
-        .bufA_rd_addr_a (bufA_rd_addr_a),
-        .bufA_rd_addr_b (bufA_rd_addr_b),
-        .bufB_rd_addr_a (bufB_rd_addr_a),
-        .bufB_rd_addr_b (bufB_rd_addr_b)
+        .clk       (clk),
+        .rst_n     (rst_n),
+        .a_k_rd_idx(a_k_rd_idx),
+        .b_k_rd_idx(b_k_rd_idx),
+        .vf_idx    (vf_idx_out),
+        .rd_addr   (rd_addr)
     );
 
 endmodule

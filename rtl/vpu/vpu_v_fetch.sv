@@ -3,55 +3,17 @@
 import fa_pkg::*;
 
 module vpu_v_fetch (
-    input  logic clk,
-    input  logic rst_n,
+    input  logic clk, rst_n,
 
-    // ------------------------------------------------------------
-    // V fetch index
-    //
-    // vf_idx[3:1] = row
-    // vf_idx[0]   = iteration
-    //
-    // For an 8x16 V tile:
-    //
-    // 0  -> V[0][0:7]
-    // 1  -> V[0][8:15]
-    // 2  -> V[1][0:7]
-    // 3  -> V[1][8:15]
-    // ...
-    // 14 -> V[7][0:7]
-    // 15 -> V[7][8:15]
-    //
-    // vf_idx is sent to the address generator, which drives the
-    // SRAM. The SRAM has one-cycle latency.
-    // ------------------------------------------------------------
-
-    input logic [V_IDX_W-1:0] vf_idx,
+    input logic [V_IDX_W-1:0] vf_idx_in,
 
     input  logic vf_start,
     output logic vf_busy,
     output logic vf_done,
 
-    // ------------------------------------------------------------
-    // SRAM data
-    //
-    // NUM_PORTS SRAM ports, WPA operands per port.
-    //
-    // Total operands received per cycle:
-    //
-    //     NUM_PORTS * WPA
-    //
-    // Example:
-    //     NUM_PORTS = 2
-    //     WPA       = 4
-    //     => 8 operands/cycle
-    // ------------------------------------------------------------
+    output vf_idx_out,
 
     input operand_t v_mbd [NUM_PORTS*WPA],
-
-    // ------------------------------------------------------------
-    // Complete V tile
-    // ------------------------------------------------------------
 
     output operand_t v_tile [SA_ROWS][D_MODEL]
 );
@@ -75,6 +37,7 @@ module vpu_v_fetch (
 
     assign row_idx_d  = vf_idx_d[V_IDX_W-1:1];
     assign iter_idx_d = vf_idx_d[0];
+    assign vf_idx_out = vf_idx_in;
 
     localparam int OFFSET_W = (D_MODEL <= 1) ? 1 : $clog2(D_MODEL);
 
@@ -117,7 +80,7 @@ module vpu_v_fetch (
                     if (vf_start) begin
                         vf_busy <= 1'b1;
 
-                        vf_idx_d       <= vf_idx;
+                        vf_idx_d       <= vf_idx_in;
                         vf_idx_valid_d <= 1'b1;
 
                         state <= VF_LOAD;
@@ -141,14 +104,11 @@ module vpu_v_fetch (
                         end
                     end
                 if (vf_idx_valid_d && (vf_idx_d != V_IDX_W'(TOTAL_FETCHES - 1))) begin
-                        vf_idx_d       <= vf_idx;
+                        vf_idx_d       <= vf_idx_in;
                         vf_idx_valid_d <= 1'b1;
                     end
                 end
-
-                // =================================================
-                // Default
-                // =================================================
+                
                 default: begin
                     state          <= VF_IDLE;
                     vf_busy        <= 1'b0;
