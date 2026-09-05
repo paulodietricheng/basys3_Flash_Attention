@@ -22,13 +22,6 @@ module fa_ctrl_mvp (
 // Implement the simple flash attention algorithim. Double buffering,
 // DMA loads, and CPU interfacing shall be implemented in V2. 
 
-    // Subtile Counter
-    logic [MAX_STC_W-1:0] stile_count;
-
-    // Indexes  
-    logic [MAX_STC_W-1:0] q_subtile_idx;
-    logic [MAX_STC_W-1:0] kv_subtile_idx;
-
     // Compute subtile count given the sequence length, assuming each 
     // vector spans D_MODEL / WPA addresses. 
     
