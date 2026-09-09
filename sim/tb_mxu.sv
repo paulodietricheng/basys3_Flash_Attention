@@ -37,14 +37,12 @@ module tb_mxu;
         .mxu_start       (start),
         .mxu_done        (done),
         .mxu_cmd         (cmd),
-        .mxu_reading_ram (mxu_reading_ram),
+        .mxu_using_mem (mxu_reading_ram),
         .in_a            (in_a),
         .in_b            (in_b),
         .a_k_rd_idx    (a_k_rd_idx),
         .b_k_rd_idx    (b_k_rd_idx),
-        .c               (c),
-        .row_max         (row_max),
-        .row_sum         (row_sum)
+        .c               (c)
     );
 
     // =====================================================

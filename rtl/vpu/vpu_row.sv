@@ -134,7 +134,7 @@ module vpu_row (
     logic [COL_IDX_W-1:0] col_idx;
 
     // Input row register
-    accumulator_t x_i_reg [0:SA_COLS-1];
+    accumulator_t x_i_reg [0:BATCH_SIZE-1];
 
     // Current / previous running maximum
     accumulator_t m_i;
@@ -246,8 +246,6 @@ module vpu_row (
             
             curr_state <= vr_IDLE;          
         end else begin
-            $display("Time=%0t State=%s col_idx=%0d m_i=%0d d_i=%0d exp_done=%b scl_done=%b rcp_done=%b", 
-                     $time, curr_state.name(), col_idx, m_i, d_i, exp_done, scl_done, rcp_done);           
             case (curr_state)
                 vr_IDLE: begin
                     if (vpu_row_start) begin

@@ -28,18 +28,24 @@ package fa_pkg;
     localparam OPERAND_W  = 8; // INT8
     localparam ACC_W      = 32; // INT32
     localparam D_MODEL    = 16;
+    localparam TOKEN_SIZE = OPERAND_W * D_MODEL; //bits
 
     //=============================================================================
     // BRAM organization
     //============================================================================
-    localparam BRAM_PORT_W = 32;
+    localparam BUF_PORT_W = 32;
+    localparam BUF_DEPTH = 1024;
     localparam NUM_PORTS = 2;
-    localparam WPA = BRAM_PORT_W / OPERAND_W;
+    localparam WPA = BUF_PORT_W / OPERAND_W;
+    localparam BUF_ADDR_W = $clog2(BUF_DEPTH);
+    
+    localparam BUF_SIZE = BUF_PORT_W * BUF_DEPTH; //bits
     
     //=============================================================================
     // Buffer organization
     //============================================================================
     localparam NUM_BUF = 4;
+    localparam BATCH_SIZE = 8;
     
     // ============================================================================
     // Systolic Array
@@ -89,7 +95,14 @@ package fa_pkg;
     // ============================================================================
     typedef logic signed [OPERAND_W-1:0]   operand_t;
     typedef logic signed [ACC_W-1:0]       accumulator_t;
-    typedef logic        [BRAM_PORT_W-1:0] buf_port_t;
+    typedef logic        [BUF_PORT_W-1:0] buf_word_t;
+    
+    //=============================================================================
+    // Tile Organization
+    //============================================================================
+    localparam int MAX_TILE = (BUF_DEPTH * WPA) / (SA_COLS * D_MODEL);
+    localparam int MAX_TILE_W = $clog2(MAX_TILE);
+    localparam int MAX_TILE_SQ_LEN_W = BUF_SIZE / TOKEN_SIZE; //bits
     
     // ============================================================================
     // VPU

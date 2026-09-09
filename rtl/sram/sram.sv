@@ -25,19 +25,19 @@ module sram (
     input logic clk,
 
     // Input data
-    input sram_word_t din [NUM_BUF][NUM_PORTS],
+    input buf_word_t din [NUM_BUF][NUM_PORTS],
 
     // Double buffer control
     input logic read_bank [NUM_BUF],
 
     // Write addresses
-    input logic [SRAM_ADDR_W-1:0] wr_addr [NUM_BUF][NUM_PORTS],
+    input logic [BUF_ADDR_W-1:0] wr_addr [NUM_BUF][NUM_PORTS],
 
     // Read addresses
-    input logic [SRAM_ADDR_W-1:0] rd_addr [NUM_BUF][NUM_PORTS],
+    input logic [BUF_ADDR_W-1:0] rd_addr [NUM_BUF][NUM_PORTS],
 
     // Output data
-    output sram_word_t dout [NUM_BUF][NUM_PORTS],
+    output buf_word_t dout [NUM_BUF][NUM_PORTS],
 
     // Busy signals
     input logic mxu_using_mem,
