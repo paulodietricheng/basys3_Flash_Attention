@@ -85,8 +85,8 @@ module fa_top (
     // -----------------
     sram_word_t din       [NUM_BUF][NUM_PORTS]; // TODO (Q3): no DMA instantiated -> undriven
     logic       read_bank [NUM_BUF];
-    logic [SRAM_ADDR_W-1:0] wr_addr [NUM_BUF][NUM_PORTS]; // TODO (Q3): undriven, no DMA
-    logic [SRAM_ADDR_W-1:0] rd_addr [NUM_BUF][NUM_PORTS];
+    logic [BUF_PORT_W-1:0] wr_addr [NUM_BUF][NUM_PORTS]; // TODO (Q3): undriven, no DMA
+    logic [BUF_PORT_W-1:0] rd_addr [NUM_BUF][NUM_PORTS];
     sram_word_t dout      [NUM_BUF][NUM_PORTS];
 
     logic mxu_using_mem; 

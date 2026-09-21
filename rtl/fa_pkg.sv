@@ -36,7 +36,10 @@ package fa_pkg;
     localparam BUF_PORT_W = 32;
     localparam BUF_DEPTH = 1024;
     localparam NUM_PORTS = 2;
+    
     localparam WPA = BUF_PORT_W / OPERAND_W;
+    localparam WPA_W = $clog2(WPA);
+    
     localparam BUF_ADDR_W = $clog2(BUF_DEPTH);
     
     localparam BUF_SIZE = BUF_PORT_W * BUF_DEPTH; //bits
@@ -46,6 +49,10 @@ package fa_pkg;
     //============================================================================
     localparam NUM_BUF = 4;
     localparam BATCH_SIZE = 8;
+    localparam MAX_TOKENS = BUF_SIZE / TOKEN_SIZE;
+    
+    localparam ADDR_PER_DIM = MAX_TOKENS / WPA;
+    localparam ADDR_PER_DIM_W = $clog2(ADDR_PER_DIM);
     
     // ============================================================================
     // Systolic Array
@@ -59,8 +66,8 @@ package fa_pkg;
     localparam SA_COLS    = 8;
     localparam SA_ROWS    = 8;
     
-    localparam M_W = $clog2(SA_COLS + 1); // + 1 to range from 1
-    localparam N_W = $clog2(SA_ROWS + 1); // to SA_SIZE.
+    localparam M_W = $clog2(MAX_TOKENS + 1); // + 1 to range from 1
+    localparam N_W = $clog2(MAX_TOKENS + 1); // to MAX_TOKENS.
     localparam K_W = $clog2(D_MODEL + 1); 
     
     typedef logic [M_W-1:0] m_dim_t;
@@ -95,7 +102,7 @@ package fa_pkg;
     // ============================================================================
     typedef logic signed [OPERAND_W-1:0]   operand_t;
     typedef logic signed [ACC_W-1:0]       accumulator_t;
-    typedef logic        [BUF_PORT_W-1:0] buf_word_t;
+    typedef logic        [BUF_PORT_W-1:0]  buf_word_t;
     
     //=============================================================================
     // Tile Organization

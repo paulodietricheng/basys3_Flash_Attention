@@ -61,8 +61,8 @@ module mxu_systolic_array(
     // Generate and connect PEs
     generate
         genvar i, j;
-        for (j = 0; j < SA_COLS; j++) begin : GEN_COL
-            for (i = 0; i < SA_ROWS; i++) begin : GEN_ROW                
+        for (j = 0; j < SA_ROWS; j++) begin : GEN_ROW
+            for (i = 0; i < SA_COLS; i++) begin : GEN_COL              
                 pe U_PE(
                     .clk  (clk),
                     .rst_n    (rst_n),

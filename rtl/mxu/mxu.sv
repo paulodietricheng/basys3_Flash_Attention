@@ -36,10 +36,12 @@ module mxu(
     output logic mxu_using_mem [2],  
     
     // External wires for Operand handler
-    input  operand_t in_a [SA_COLS],
-    input  operand_t in_b [SA_ROWS],
+    input  operand_t in_a [SA_ROWS],
+    input  operand_t in_b [SA_COLS],
     output k_dim_t a_k_rd_idx,
     output k_dim_t b_k_rd_idx,
+    output m_dim_t a_m_rd_offset,
+    output n_dim_t b_n_rd_offset,
     
     // To VPU
     output accumulator_t c [0:SA_ROWS-1][0:SA_COLS-1]

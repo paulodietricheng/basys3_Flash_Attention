@@ -29,7 +29,9 @@ module mxu_op_handler (
     input  k_dim_t b_k_idx,
     input  logic   a_k_valid,
     input  logic   b_k_valid,
-    
+    input m_dim_t a_m_offset,
+    input n_dim_t b_n_offset,
+   
     // SRAM
     input  operand_t in_a [SA_ROWS],
     input  operand_t in_b [SA_COLS],
@@ -37,6 +39,8 @@ module mxu_op_handler (
     // rd_addr_gen
     output k_dim_t a_k_rd_idx,
     output k_dim_t b_k_rd_idx,
+    output m_dim_t a_m_rd_offset,
+    output n_dim_t b_n_rd_offset,
     
     // To operand skewer
     output operand_t a_j [SA_ROWS],
@@ -60,7 +64,8 @@ module mxu_op_handler (
     // Generate dimensional base address
     assign a_k_rd_idx = a_k_idx;
     assign b_k_rd_idx = b_k_idx;
-    
+    assign a_m_rd_offset = a_m_offset;
+    assign b_n_rd_offset = b_n_offset;  
     
     // Forward incoming vectors / output 0 for invalid dimentions
     genvar row;
