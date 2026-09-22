@@ -26,15 +26,15 @@ module double_buf(
 
 //    // DMA
 //    input logic dma_using_mem,
-    input sram_word_t din [NUM_PORTS],
-    input logic [SRAM_ADDR_W-1:0] wr_addr [NUM_PORTS],
+    input buf_word_t din [NUM_PORTS],
+    input logic [BUF_ADDR_W-1:0] wr_addr [NUM_PORTS],
 
     // SRAM_Control
     input logic read_bank,
     output logic busy,
 
     // addr_gen
-    input logic [SRAM_ADDR_W-1:0] rd_addr [NUM_PORTS],
+    input logic [BUF_ADDR_W-1:0] rd_addr [NUM_PORTS],
 
     // mxu
     input logic mxu_using_mem,
@@ -43,7 +43,7 @@ module double_buf(
     input logic vpu_using_mem,
 
     // To Word Packer
-    output sram_word_t dout [NUM_PORTS]
+    output buf_word_t dout [NUM_PORTS]
 );
 
     assign busy = mxu_using_mem | vpu_using_mem;
@@ -51,8 +51,8 @@ module double_buf(
     sram_word_t bank0_dout [NUM_PORTS];
     sram_word_t bank1_dout [NUM_PORTS];
 
-    logic [SRAM_ADDR_W-1:0] bank0_addr [NUM_PORTS];
-    logic [SRAM_ADDR_W-1:0] bank1_addr [NUM_PORTS];
+    logic [BUF_ADDR_W-1:0] bank0_addr [NUM_PORTS];
+    logic [BUF_ADDR_W-1:0] bank1_addr [NUM_PORTS];
 
     // Ping-pong read/write addressing.
     always_comb begin
