@@ -44,8 +44,6 @@ module attention_ctrl (
         if (!rst_n) begin
             mxu_cmd <= '0;
             mxu_start <= '0;
-            busy <= '0;
-            done <= '0;
             q_batch_idx <= '0;
             kv_batch_idx <= '0;
             
@@ -56,8 +54,6 @@ module attention_ctrl (
                 fa_IDLE: begin
                     mxu_cmd <= '0;
                     mxu_start <= '0;
-                    busy <= '0;
-                    done <= '0;
                     if (start) begin
                         q_batch_idx  <= '0;
                         kv_batch_idx <= '0;
