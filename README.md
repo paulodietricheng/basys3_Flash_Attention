@@ -39,6 +39,7 @@ The complete system includes:
 | Input datatype            |                   INT8 |
 | Embedding dimension       |                     16 |
 | Supported sequence length |                  8–256 |
+| Tokens per second (256 tokens workload) | 7708|      
 | Sequence granularity      |         Multiples of 8 |
 | Matrix transport          |                   UART |
 | Host interface            |                 Python |
