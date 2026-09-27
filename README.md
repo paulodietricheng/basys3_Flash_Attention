@@ -1,3 +1,5 @@
+![AI](https://img.shields.io/badge/FlashAttention-Accelerator-green) ![Board](https://img.shields.io/badge/board-Basys3-orange) ![Tool](https://img.shields.io/badge/tool-Vivado-red) ![HDL](https://img.shields.io/badge/HDL-SystemVerilog-blue)
+
 # Flash Attention FPGA Accelerator
 
 Hardware implementation of an attention accelerator targeting the **Digilent Basys 3 FPGA**, with a complete RTL datapath, systolic matrix multiplication unit, on-chip memory system, UART command interface, PC client, verification infrastructure, and automated Vivado build flow.
