@@ -7,7 +7,7 @@ This project implements a tiled attention accelerator targeting the Digilent Bas
 For a single attention head, the target operation is
 
 $$
-O = \operatorname{softmax}(QK^T)V
+O = \text{softmax}(QK^T)V
 $$
 
 where $Q$, $K$, and $V$ contain the query, key, and value vectors respectively.
