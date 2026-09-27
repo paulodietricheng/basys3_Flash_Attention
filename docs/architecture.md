@@ -2,17 +2,17 @@
 
 ## 1. Overview
 
-This project implements a tiled attention accelerator targeting the Digilent Basys 3 FPGA development board. The design is intended as an educational hardware implementation of the core ideas behind FlashAttention: decomposing attention into on-chip tiles and maintaining running softmax statistics so that the complete \(N\times N\) attention matrix does not need to be materialized in memory [1].
+This project implements a tiled attention accelerator targeting the Digilent Basys 3 FPGA development board. The design is intended as an educational hardware implementation of the core ideas behind FlashAttention: decomposing attention into on-chip tiles and maintaining running softmax statistics so that the complete $N \times N$ attention matrix does not need to be materialized in memory [1].
 
 For a single attention head, the target operation is
 
 $$
-O = \text{softmax}(QK^T)V
+O = \operatorname{softmax}(QK^T)V
 $$
 
-where \(Q\), \(K\), and \(V\) contain the query, key, and value vectors respectively.
+where $Q$, $K$, and $V$ contain the query, key, and value vectors respectively.
 
-The accelerator uses an **8×8 output-stationary systolic array** to compute tiled \(QK^T\) products and a **Vector Processing Unit (VPU)** to incrementally update the softmax state and accumulate the corresponding \(V\) vectors. The implementation operates on INT8 input operands with INT32 matrix-multiplication accumulators.
+The accelerator uses an **8×8 output-stationary systolic array** to compute tiled $QK^T$ products and a **Vector Processing Unit (VPU)** to incrementally update the softmax state and accumulate the corresponding $V$ vectors. The implementation operates on INT8 input operands with INT32 matrix-multiplication accumulators.
 
 The current Basys 3 implementation is a self-contained proof-of-concept system. Q, K, and V are transferred from a host PC through the board's USB-UART interface into four on-chip BRAM banks. Computation then proceeds entirely on the FPGA before the resulting O matrix is read back by the host.
 
@@ -128,7 +128,7 @@ The current RTL defines the following accelerator geometry:
 | `SA_COLS` | 8 | Systolic-array columns |
 | `BATCH_SIZE` | 8 | Tokens processed per Q/K tile |
 | `BUF_PORT_W` | 32 | BRAM interface width |
-| `NUM_PORTS` | 2 | Memory ports used by the compute path |
+| `NUM_PORTS` | 2 | Memory ports used by compute path |
 | `BUF_DEPTH` | 1024 | 32-bit words per memory bank |
 | `NUM_BUF` | 4 | Q, K, V, and O memory banks |
 | `MAX_TOKENS` | 256 | Maximum supported sequence length |
@@ -141,49 +141,51 @@ Valid sequence lengths are non-zero multiples of eight up to 256 tokens.
 
 # 5. Attention Tiling Strategy
 
-For sequence length \(N\) and embedding dimension \(d=16\),
+For sequence length $N$ and embedding dimension $d=16$,
 
-\[
-Q,K,V \in \mathbb{Z}^{N\times16}.
-\]
+$$
+Q,K,V \in \mathbb{Z}^{N \times 16}.
+$$
 
 The accelerator divides the sequence dimension into groups of eight tokens:
 
-\[
+$$
 B = \frac{N}{8}.
-\]
+$$
 
 Each Q batch is compared against every K/V batch.
 
-For Q batch \(i\) and K/V batch \(j\), the MXU computes
+For Q batch $i$ and K/V batch $j$, the MXU computes
 
-\[
+$$
 S_{ij}=Q_iK_j^T
-\]
+$$
 
 with
 
-\[
-Q_i\in\mathbb{Z}^{8\times16},
-\qquad
-K_j^T\in\mathbb{Z}^{16\times8},
-\]
+$$
+Q_i\in\mathbb{Z}^{8 \times 16},
+$$
+
+$$
+K_j^T\in\mathbb{Z}^{16 \times 8},
+$$
 
 producing
 
-\[
-S_{ij}\in\mathbb{Z}^{8\times8}.
-\]
+$$
+S_{ij}\in\mathbb{Z}^{8 \times 8}.
+$$
 
 The controller therefore executes
 
-\[
+$$
 B^2
-\]
+$$
 
 MXU/VPU operations for a complete attention request.
 
-Importantly, the full \(N\times N\) score matrix is never required as an intermediate on-chip structure. Each 8×8 score tile is consumed by the VPU before the next K/V tile is processed.
+Importantly, the full $N \times N$ score matrix is never required as an intermediate on-chip structure. Each 8×8 score tile is consumed by the VPU before the next K/V tile is processed.
 
 This follows the central IO-aware motivation of FlashAttention: attention can be evaluated in tiles while maintaining sufficient softmax statistics instead of repeatedly materializing the complete attention matrix in a larger memory hierarchy [1].
 
@@ -236,19 +238,17 @@ The VPU preserves the running softmax state while `kv_batch_idx` advances. When 
 
 The Matrix Multiplication Unit (MXU) computes
 
-\[
-C=A B
-\]
+$$
+C=AB
+$$
 
-for an \(M\times K\) matrix A and \(K\times N\) matrix B.
+for an $M \times K$ matrix A and $K \times N$ matrix B.
 
 For attention, its configured dimensions are
 
-\[
-8\times16 \;\cdot\;16\times8
-\rightarrow
-8\times8.
-\]
+$$
+(8 \times 16)(16 \times 8) \rightarrow (8 \times 8).
+$$
 
 The MXU consists of four major components:
 
@@ -257,7 +257,7 @@ The MXU consists of four major components:
 3. Operand skewer
 4. 8×8 systolic array
 
-Systolic arrays use a regular two-dimensional network of processing elements in which operands propagate locally between neighboring PEs. This permits data reuse without repeatedly accessing the SRAM for every multiply-accumulate operation [3].
+Systolic arrays use a regular two-dimensional network of processing elements in which operands propagate locally between neighboring PEs. This permits data reuse without repeatedly accessing SRAM for every multiply-accumulate operation [3].
 
 ---
 
@@ -277,21 +277,21 @@ Its FSM contains:
 
 The expected result latency is calculated as
 
-\[
+$$
 T_{\text{MXU}}=2M+N+K-2.
-\]
+$$
 
 For the current geometry,
 
-\[
+$$
 M=8,\qquad N=8,\qquad K=16,
-\]
+$$
 
 giving
 
-\[
+$$
 T_{\text{MXU}}=38
-\]
+$$
 
 cycles for the systolic result-latency counter used by the controller.
 
@@ -320,7 +320,7 @@ The row and column offsets are particularly important because the same physical 
 
 A conventional systolic matrix multiplication cannot inject every row and column simultaneously without accounting for propagation latency through the array.
 
-`mxu_op_skewer` delays operand lane \(i\) by \(i\) cycles before injection.
+`mxu_op_skewer` delays operand lane $i$ by $i$ cycles before injection.
 
 Conceptually:
 
@@ -353,9 +353,9 @@ The MXU uses an **output-stationary (OS)** dataflow.
 
 The array contains
 
-\[
-8\times8=64
-\]
+$$
+8 \times 8 = 64
+$$
 
 processing elements.
 
@@ -379,9 +379,9 @@ A7 ------->    PE70 --> PE71 --> PE72 --> ... --> PE77
 
 Each PE owns one output accumulator and performs
 
-\[
+$$
 c_{ij}\leftarrow c_{ij}+a_{ik}b_{kj}.
-\]
+$$
 
 The accumulator remains stationary inside the PE while the A and B operands move through the array.
 
@@ -408,15 +408,15 @@ Each bank contains 1024 × 32-bit words.
 
 The resulting capacity of each bank is
 
-\[
-1024\times32=32768\text{ bits}=4096\text{ bytes}.
-\]
+$$
+1024 \times 32 = 32768\text{ bits} = 4096\text{ bytes}.
+$$
 
 Since each embedding contains 16 INT8 values,
 
-\[
-4096 / 16 = 256
-\]
+$$
+\frac{4096}{16}=256
+$$
 
 complete token embeddings fit in one bank.
 
@@ -432,19 +432,19 @@ The systolic array requires eight token values from the same embedding dimension
 
 For Q, the generated address is conceptually
 
-\[
+$$
 A_Q =
-k\cdot S+
+kS+
 \frac{m_{\text{offset}}}{WPA}+p
-\]
+$$
 
 where:
 
-- \(k\) is the embedding dimension,
-- \(S\) is the Q/K stride in words,
-- \(m_{\text{offset}}\) identifies the Q token batch,
-- \(WPA=4\) is the number of INT8 operands per 32-bit word,
-- \(p\) identifies the memory port.
+- $k$ is the embedding dimension,
+- $S$ is the Q/K stride in words,
+- $m_{\text{offset}}$ identifies the Q token batch,
+- $WPA=4$ is the number of INT8 operands per 32-bit word,
+- $p$ identifies the memory port.
 
 K uses the equivalent organization with `b_n_offset`.
 
@@ -458,15 +458,15 @@ V is stored in conventional token-major order.
 
 For V, the address generator uses the K/V batch offset together with the V-fetch index:
 
-\[
+$$
 A_V =
-n_{\text{offset}}\cdot
+n_{\text{offset}}
 \frac{D_{\text{MODEL}}}{WPA}
 +
-v_{\text{fetch}}\cdot NUM_{\text{PORTS}}
+v_{\text{fetch}}NUM_{\text{PORTS}}
 +
 p.
-\]
+$$
 
 Unlike Q/K, the VPU eventually consumes complete V rows rather than injecting one embedding dimension across a systolic-array edge.
 
@@ -482,21 +482,21 @@ Its purpose is to implement the non-GEMM portion of attention while avoiding sto
 
 For each Q row, the VPU maintains running state consisting of:
 
-\[
+$$
 m_i
-\]
+$$
 
 for the running maximum,
 
-\[
+$$
 d_i
-\]
+$$
 
 for the running softmax denominator, and
 
-\[
+$$
 o_i
-\]
+$$
 
 for the running unnormalized output vector.
 
@@ -512,15 +512,15 @@ Before row processing begins, `vpu_v_fetch` retrieves the corresponding 8×16 V 
 
 The VPU therefore operates on
 
-\[
+$$
 S_{ij}\in\mathbb{Z}^{8\times8}
-\]
+$$
 
 together with
 
-\[
+$$
 V_j\in\mathbb{Z}^{8\times16}.
-\]
+$$
 
 Once the tile has been fetched, the same V values can be reused while the eight rows of the score tile are processed.
 
@@ -578,9 +578,9 @@ After the VPU completes the final K/V tile associated with a Q batch, `o_writer`
 
 The writer receives
 
-\[
+$$
 O_N\in\mathbb{Z}^{8\times16}
-\]
+$$
 
 and packs four INT8 output elements into each 32-bit BRAM word.
 
@@ -592,7 +592,7 @@ The O bank can subsequently be accessed through the generic host memory interfac
 
 # 12. End-to-End Compute Flow
 
-For a sequence containing \(N\) tokens, execution proceeds as follows:
+For a sequence containing $N$ tokens, execution proceeds as follows:
 
 ```text
 1. Host quantizes/prepares Q, K and V as INT8 matrices.
@@ -633,29 +633,29 @@ For a sequence containing \(N\) tokens, execution proceeds as follows:
 
 For
 
-\[
-B=N/8
-\]
+$$
+B=\frac{N}{8}
+$$
 
 batches, the accelerator performs
 
-\[
+$$
 B^2
-\]
+$$
 
 8×16 × 16×8 matrix multiplications.
 
-For the maximum sequence length \(N=256\),
+For the maximum sequence length $N=256$,
 
-\[
+$$
 B=32
-\]
+$$
 
 and therefore
 
-\[
+$$
 B^2=1024
-\]
+$$
 
 Q/K tile interactions are executed.
 
@@ -685,7 +685,7 @@ fa_top host interface
 Q/K/V/O BRAM
 ```
 
-The UART runs at
+The UART runs at:
 
 ```text
 115200 baud
@@ -750,178 +750,4 @@ Partial sums remain inside their associated PEs while operands propagate through
 
 ### Tiled sequence processing
 
-Only an 8×8 attention-score tile is processed at one time. The complete \(N\times N\) score matrix is not stored.
-
-### Row-serial VPU
-
-Only one score row is processed by the nonlinear datapath at a time, allowing EXP, reciprocal, and scaling resources to be reused.
-
-### Time-multiplexed nonlinear units
-
-Expensive nonlinear arithmetic is reused over multiple cycles instead of being replicated for every score.
-
-### BRAM-resident matrices
-
-The current proof-of-concept stores the complete Q/K/V/O working set on chip, avoiding the complexity of a DMA and external-memory subsystem.
-
-These choices deliberately exchange latency for reduced hardware cost.
-
----
-
-# 16. Current Implementation Limitations
-
-The present revision should be understood as an architectural and RTL proof of concept.
-
-The following limitations are intentional or remain under development:
-
-1. **Fixed embedding dimension:** \(d=16\).
-2. **Fixed 8×8 systolic-array geometry.**
-3. **Maximum sequence length:** 256 tokens.
-4. **INT8 input and output interface.**
-5. **Placeholder synthesizable EXP and reciprocal functions.**
-6. **No external DRAM/HBM interface.**
-7. **No DMA engine.**
-8. **No double buffering.**
-9. **No communication/compute overlap.**
-10. **Single-head attention datapath.**
-11. **No causal masking in the current datapath.**
-12. **No production quantization/scaling policy for converting normalized VPU results back to INT8.**
-
-The source package has passed RTL-level regression and UART-path simulation. However, simulation success does not establish FPGA timing closure, resource fit, or physical-board correctness. Those require synthesis, implementation, timing analysis, and execution on the Basys 3.
-
----
-
-# 17. Future Architecture
-
-The current Basys 3 implementation establishes the control, compute, memory, nonlinear-processing, and host-interface architecture required for a complete attention accelerator.
-
-Future revisions can extend this architecture in several directions.
-
-## 17.1 Synthesizable Nonlinear Functions
-
-The immediate next step is replacing the placeholder EXP and reciprocal units with synthesizable approximations.
-
-Potential implementations include:
-
-- lookup tables,
-- piecewise polynomial approximations,
-- fixed-point iterative reciprocal,
-- compressed lookup-table architectures [4].
-
-This step converts the current architectural prototype into a numerically meaningful attention implementation.
-
-## 17.2 DMA and External Memory
-
-Larger sequence lengths cannot remain entirely in the Basys 3 BRAM capacity.
-
-A future architecture can introduce
-
-```text
-External Memory
-      |
-     DMA
-      |
-Double-Buffered SRAM
-      |
- MXU / VPU
-```
-
-allowing tiles to be transferred while other tiles are being processed.
-
-This more closely follows the memory-hierarchy motivation of FlashAttention, where tiling reduces transfers between large off-chip memory and a smaller high-bandwidth on-chip memory [1].
-
-## 17.3 Larger FPGA Target
-
-A larger accelerator can target devices such as the AMD Alveo family, enabling:
-
-- larger systolic arrays,
-- HBM-backed tensors,
-- wider memory interfaces,
-- PCIe host communication,
-- multiple parallel VPU lanes,
-- larger embedding dimensions,
-- multiple attention heads.
-
-## 17.4 Increased Numerical Precision
-
-Future revisions may replace the current INT8-oriented datapath with formats such as:
-
-- Q-format fixed point,
-- BF16,
-- mixed INT8/fixed-point arithmetic.
-
-The appropriate representation should be selected together with the EXP, reciprocal, normalization, rounding, and saturation architecture rather than treating each block independently.
-
----
-
-# 18. Verification Strategy
-
-Verification is divided into compute-level and system-level testing.
-
-The compute regression exercises the MXU, internal BRAMs, VPU, controller, and output path over multiple sequence lengths and memory layouts.
-
-The UART regression additionally verifies:
-
-```text
-PC client
-   ↓
-UART serialization
-   ↓
-uart_rx
-   ↓
-uart_command
-   ↓
-BRAM
-   ↓
-MXU / VPU
-   ↓
-O BRAM
-   ↓
-uart_tx
-   ↓
-PC client
-```
-
-The test infrastructure verifies memory loading and readback, command validation, CRC rejection, invalid sequence lengths, reset during computation, busy-state rejection, UART framing behavior, and exact output comparison against generated fixtures.
-
-The Q16 simulation reference is used separately to evaluate the numerical structure of the VPU. It is not part of the synthesizable hardware configuration.
-
----
-
-# 19. Summary
-
-The accelerator implements tiled attention as a cooperation between three principal architectural components:
-
-\[
-\boxed{\text{BRAM} \rightarrow \text{MXU} \rightarrow \text{VPU}}
-\]
-
-The **BRAM subsystem** supplies tiled Q, K, and V operands.
-
-The **MXU** uses an 8×8 output-stationary systolic array to evaluate
-
-\[
-Q_iK_j^T.
-\]
-
-The **VPU** consumes each score tile and incrementally updates the softmax/output state using the corresponding V tile.
-
-An attention controller repeatedly schedules these operations over all Q and K/V tile combinations, while a UART subsystem provides a complete PC-to-FPGA control and data path.
-
-The architecture intentionally serializes and time-multiplexes several operations to fit a small Artix-7 device. This makes the system useful not only as an attention accelerator prototype, but also as a concrete study of the architectural tradeoffs involved in implementing transformer workloads in RTL.
-
----
-
-# References
-
-[1] T. Dao, D. Y. Fu, S. Ermon, A. Rudra, and C. Ré, “FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness,” *Advances in Neural Information Processing Systems (NeurIPS)*, vol. 35, 2022.  
-Available: https://arxiv.org/abs/2205.14135
-
-[2] Digilent, “Basys 3 FPGA Board Reference Manual,” Rev. C. Digilent Inc.  
-Available: https://digilent.com/reference/_media/reference/programmable-logic/basys-3/basys3_rm.pdf
-
-[3] A. Samajdar, J. M. Joseph, Y. Zhu, P. Whatmough, M. Mattina, and T. Krishna, “A Systematic Methodology for Characterizing Scalability of DNN Accelerators using SCALE-Sim,” in *Proceedings of the IEEE International Symposium on Performance Analysis of Systems and Software (ISPASS)*, 2020.  
-Available: https://horizon-lab.org/pubs/ispass20.pdf
-
-[4] A. Khataei and K. Bazargan, “CompressedLUT: An Open Source Tool for Lossless Compression of Lookup Tables for Function Evaluation and Beyond,” in *Proceedings of the 2024 ACM/SIGDA International Symposium on Field Programmable Gate Arrays (FPGA ’24)*, 2024.  
-DOI: https://doi.org/10.1145/3626202.3637575
+Only an 8×8 attention-score tile is processed at one time. The complete $N\times N$ score matrix is not
