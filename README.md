@@ -517,6 +517,7 @@ Notable limitations include:
 V1
 
 - Replace the placeholders exp and rcp by their propper implementations
+- Make accelerator have a sequence granularity of 1
 
 V2
 
