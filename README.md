@@ -1,4 +1,4 @@
-![AI](https://img.shields.io/badge/FlashAttention-Accelerator-green) ![Board](https://img.shields.io/badge/board-Basys3-orange) ![Tool](https://img.shields.io/badge/tool-Vivado-red) ![HDL](https://img.shields.io/badge/HDL-SystemVerilog-blue)
+![Category](https://img.shields.io/badge/category-FlashAttention_Accelerator-green) ![Board](https://img.shields.io/badge/board-Basys3-orange) ![Tool](https://img.shields.io/badge/tool-Vivado-red) ![HDL](https://img.shields.io/badge/HDL-SystemVerilog-blue)
 
 # Flash Attention FPGA Accelerator
 
