@@ -1,0 +1,41 @@
+{
+  "rtl_simulator": "Verilator; Python package 5.48.0, simulation banner 5.49",
+  "actual_mxu_and_internal_bram": true,
+  "core_regressions": {
+    "configurations": ["dummy_fixed", "dummy_dense", "reference_fixed", "reference_dense"],
+    "completed_jobs": 160,
+    "completed_matrix_blocks": 45848,
+    "checked_payload_words": 69120,
+    "passed": true
+  },
+  "bram_unit_test_passed": true,
+  "python_client_against_serial_rtl": {
+    "completed_fixture_lengths": [8, 16, 256, 8],
+    "custom_matrix_job_length": 8,
+    "all_input_words_read_back": true,
+    "exact_output_matches": true,
+    "crc_rejection_preserves_memory": true,
+    "invalid_commands_addresses_lengths_rejected": true,
+    "busy_memory_and_start_rejected": true,
+    "reset_aborts_compute_and_preserves_memory": true,
+    "truncation_timeout_oversize_and_framing_recovery": true,
+    "sequence_wrap_checked": true,
+    "passed": true
+  },
+  "production_uart": {
+    "clock_hz": 100000000,
+    "baud": 115200,
+    "clocks_per_bit": 868,
+    "peer_clocks_per_bit_tested": [860, 868, 876],
+    "passed": true
+  },
+  "standalone_systemverilog_uart_testbench": {
+    "fixture_length": 8,
+    "loads_through_uart_only": true,
+    "passed": true
+  },
+  "vivado_xsim_run": false,
+  "vivado_synthesis_and_timing_run": false,
+  "physical_board_test_run": false,
+  "default_arithmetic": "integer placeholder EXP(x)=x+1, RCP(x)=x-2"
+}

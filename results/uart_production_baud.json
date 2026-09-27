@@ -1,0 +1,8 @@
+{
+  "passed": true,
+  "checks": [
+    "capabilities, startup and CRC standard vector",
+    "real Python client writes and reads actual Q BRAM over serial pins",
+    "100 MHz / 115200 baud plus approximately +/-1% peer baud variation"
+  ]
+}

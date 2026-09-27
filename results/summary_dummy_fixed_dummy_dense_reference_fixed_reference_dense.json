@@ -1,0 +1,38 @@
+[
+  {
+    "mode": "dummy_fixed",
+    "jobs": 37,
+    "restart_jobs": 3,
+    "max_float_error": 0.0,
+    "commands": 11462,
+    "output_words": 17280,
+    "passed": true
+  },
+  {
+    "mode": "dummy_dense",
+    "jobs": 37,
+    "restart_jobs": 3,
+    "max_float_error": 0.0,
+    "commands": 11462,
+    "output_words": 17280,
+    "passed": true
+  },
+  {
+    "mode": "reference_fixed",
+    "jobs": 37,
+    "restart_jobs": 3,
+    "max_float_error": 0.0028042096553164697,
+    "commands": 11462,
+    "output_words": 17280,
+    "passed": true
+  },
+  {
+    "mode": "reference_dense",
+    "jobs": 37,
+    "restart_jobs": 3,
+    "max_float_error": 0.0028042096553164697,
+    "commands": 11462,
+    "output_words": 17280,
+    "passed": true
+  }
+]

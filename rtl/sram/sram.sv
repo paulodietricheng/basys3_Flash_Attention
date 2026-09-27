@@ -1,67 +1,84 @@
-`timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 01.07.2026 15:58:15
-// Design Name: 
-// Module Name: sram
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
+`timescale 1ns/1ps
 
 import fa_pkg::*;
 
-module sram (
-    input logic clk,
+/*
+ * ============================================================================
+ *  Module: sram
+ * ============================================================================
+ *
+ *  Description:
+ *      SRAM wrapper for the Q, K, V, and O buffers used by the Flash Attention
+ *      accelerator.
+ *
+ *      Each logical buffer is implemented as one dual-port BRAM. There is no
+ *      ping-pong buffering or bank switching inside this module.
+ *
+ *      For each BRAM port, writes have priority over reads. When no write is
+ *      active, the corresponding read address is selected if rd_en is asserted.
+ *
+ *      The Q, K, and V buffers may optionally be initialized from memory files.
+ *      The O buffer is always created without an initialization file.
+ *
+ * Author: Paulo Dietrich
+ * ============================================================================
+ */
 
-    // Input data
-    input buf_word_t din [NUM_BUF][NUM_PORTS],
+module sram #(
+    parameter Q_INIT_FILE = "",
+    parameter K_INIT_FILE = "",
+    parameter V_INIT_FILE = ""
+) (
+    input logic clk, rst_n,
 
-    // Double buffer control
-    input logic read_bank [NUM_BUF],
-
-    // Write addresses
+    // write
+    input buf_word_t             din     [NUM_BUF][NUM_PORTS],
+    input logic                  we      [NUM_BUF][NUM_PORTS],
     input logic [BUF_ADDR_W-1:0] wr_addr [NUM_BUF][NUM_PORTS],
 
-    // Read addresses
+    // read
+    input logic                  rd_en   [NUM_BUF],
     input logic [BUF_ADDR_W-1:0] rd_addr [NUM_BUF][NUM_PORTS],
-
-    // Output data
-    output buf_word_t dout [NUM_BUF][NUM_PORTS],
-
-    // Busy signals
-    input logic mxu_using_mem,
-    input logic vpu_using_mem,
-
-    output logic busy [NUM_BUF]
+    output buf_word_t            dout    [NUM_BUF][NUM_PORTS]
 );
 
-    genvar i;
-    generate
-        for (i = 0; i < NUM_BUF; i++) begin : g_double_buf
-            double_buf U_DB (
-                .clk          (clk),
-                .din          (din[i]),
-                .read_bank    (read_bank[i]),
-                .busy         (busy[i]),
-                .dma_using_mem(dma_using_mem),
-                .mxu_using_mem(mxu_using_mem),
-                .vpu_using_mem(vpu_using_mem),
-                .rd_addr      (rd_addr[i]),
-                .wr_addr      (wr_addr[i]),
-                .dout         (dout[i])
-            );
+    // Instantiate one dual-port BRAM for each logical buffer.
+    for (genvar b = 0; b < NUM_BUF; b++) begin : GEN_BUF
+        localparam INIT_FILE = (b==0) ? Q_INIT_FILE :
+                               (b==1) ? K_INIT_FILE :
+                               (b==2) ? V_INIT_FILE : "";
+
+        logic [BUF_ADDR_W-1:0] port_addr [NUM_PORTS];
+        logic                  port_we   [NUM_PORTS];
+
+        // Select either the write or read address for each physical BRAM port.
+        for (genvar p = 0; p < NUM_PORTS; p++) begin : GEN_PORT
+            assign port_we[p]   = rst_n && we[b][p];
+            assign port_addr[p] = port_we[p] ? wr_addr[b][p] :
+                                  (rst_n && rd_en[b]) ? rd_addr[b][p] : '0;
         end
-    endgenerate
+
+        bram #(
+            .DATA_W   (BUF_PORT_W),
+            .ADDR_W   (BUF_ADDR_W),
+            .INIT_FILE(INIT_FILE)
+        ) U_BRAM (
+            .clk   (clk),
+            .din_a (din[b][0]),
+            .addr_a(port_addr[0]),
+            .we_a  (port_we[0]),
+            .dout_a(dout[b][0]),
+            .din_b (din[b][1]),
+            .addr_b(port_addr[1]),
+            .we_b  (port_we[1]),
+            .dout_b(dout[b][1])
+        );
+    end
+
+    // Verify that the wrapper matches the expected memory architecture.
+    // synthesis translate_off
+    initial assert (NUM_BUF == 4 && NUM_PORTS == 2 && BUF_DEPTH == (1<<BUF_ADDR_W))
+        else $fatal(1,"SRAM wrapper requires four power-of-two-depth dual-port buffers");
+    // synthesis translate_on
 
 endmodule

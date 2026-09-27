@@ -1,81 +1,77 @@
-`timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 05/20/2026 05:20:36 PM
-// Design Name: 
-// Module Name: mxu_systolic_array
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
+`timescale 1ns/1ps
 
 import fa_pkg::*;
 
-module mxu_systolic_array(
-    // Signals
-    input  clk, rst_n,
-    
-    // From Systolic Controll
+/*
+ * ============================================================================
+ *  Module: mxu_systolic_array
+ * ============================================================================
+ *
+ *  Description:
+ *      Implements the 2D systolic processing array used by the MXU.
+ *
+ *      The array is built from a grid of processing elements. A operands move
+ *      horizontally across each row while B operands move vertically down each
+ *      column. Each processing element multiplies its current A and B operands
+ *      and accumulates the result locally.
+ *
+ *      Operation:
+ *
+ *          1. Skewed A operands enter from the left side of the array.
+ *          2. Skewed B operands enter from the top of the array.
+ *          3. Each PE forwards A to the next column and B to the next row.
+ *          4. Each PE accumulates its local multiply result into c.
+ *
+ *      array_en enables computation and data propagation through the array.
+ *      clr_acc_n clears the PE accumulators before a new matrix operation.
+ *
+ * Author: Paulo Dietrich
+ * ============================================================================
+ */
+
+module mxu_systolic_array (
+    input logic clk, rst_n,
+
+    // control
     input logic array_en,
     input logic clr_acc_n,
-    
-    // Input operands
-    input  operand_t a_j_skewed [0:SA_ROWS-1],
-    input  operand_t b_i_skewed [0:SA_COLS-1],
-     
-    // Output accumulator
-    output accumulator_t c [0:SA_ROWS-1][0:SA_COLS-1],
-    
-    // Output max
-    output accumulator_t row_max [0:SA_ROWS-1],
-    output accumulator_t row_sum [0:SA_ROWS-1] 
+
+    // operands
+    input operand_t a_j_skewed[SA_ROWS],
+    input operand_t b_i_skewed[SA_COLS],
+
+    // outputs
+    output accumulator_t c[SA_ROWS][SA_COLS]
 );
 
-    // Interconnect fabric
-    operand_t      inter_cols [0:SA_ROWS-1][0:SA_COLS];
-    operand_t      inter_rows [0:SA_ROWS][0:SA_COLS-1];
+    // Interconnect used to move A horizontally and B vertically through the array.
+    operand_t inter_cols[SA_ROWS][SA_COLS+1];
+    operand_t inter_rows[SA_ROWS+1][SA_COLS];
 
-    // Input data to the fabric
-    always_comb begin        
-        // Populate rows
-        for(int j = 0; j < SA_ROWS; j++) begin
+    // Connect the skewed operands to the left and top edges of the array.
+    always_comb begin
+        for(int j=0; j<SA_ROWS; j++)
             inter_cols[j][0] = a_j_skewed[j];
-        end
-        
-        // Populate columns
-        for(int i = 0; i < SA_COLS; i++) begin
-            inter_rows [0][i] = b_i_skewed[i];
-        end
+
+        for(int i=0; i<SA_COLS; i++)
+            inter_rows[0][i] = b_i_skewed[i];
     end
 
-    // Generate and connect PEs
-    generate
-        genvar i, j;
-        for (j = 0; j < SA_ROWS; j++) begin : GEN_ROW
-            for (i = 0; i < SA_COLS; i++) begin : GEN_COL              
-                pe U_PE(
-                    .clk  (clk),
-                    .rst_n    (rst_n),
-                    .clr_acc_n(clr_acc_n),
-                    .array_en (array_en),
-                    .in_a   (inter_cols[j][i]),
-                    .in_b   (inter_rows[j][i]),
-                    .out_a  (inter_cols[j][i+1]),
-                    .out_b  (inter_rows[j+1][i]),
-                    .c      (c[j][i])
-                );
-            end
+    // Generate the 2D processing-element array.
+    for(genvar j=0; j<SA_ROWS; j++) begin : GEN_ROW
+        for(genvar i=0; i<SA_COLS; i++) begin : GEN_COL
+            pe U_PE (
+                .clk      (clk),
+                .rst_n    (rst_n),
+                .clr_acc_n(clr_acc_n),
+                .array_en (array_en),
+                .in_a     (inter_cols[j][i]),
+                .in_b     (inter_rows[j][i]),
+                .out_a    (inter_cols[j][i+1]),
+                .out_b    (inter_rows[j+1][i]),
+                .c        (c[j][i])
+            );
         end
-    endgenerate
+    end
 
 endmodule

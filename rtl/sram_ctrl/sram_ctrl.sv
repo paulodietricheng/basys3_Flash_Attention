@@ -1,77 +1,52 @@
-`timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 07.07.2026 18:55:25
-// Design Name: 
-// Module Name: sram_ctrl
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
+`timescale 1ns/1ps
 
 import fa_pkg::*;
 
-module sram_ctrl (
-    input logic clk, rst_n,
-    
-    // -----------
-    // db_control
-    // -----------
-    
-//    // From tr_control
-//    input  logic Atile_advance,
-    
-//    // From mxu_ctrl
-//    input logic mxu_reading_ram,
-    
-//    // To double_buffer
-//    output logic buf_read_ram [NUM_BUF],
-    
-    // ------------
-    // rd_addr_gen
-    // ------------    
-    // From operand_handler
-    input  k_dim_t a_k_rd_idx,
-    input  k_dim_t b_k_rd_idx,
-    
-    // From vpu_v_fetch
-    input logic [V_IDX_W-1:0] vf_idx,
-        
-    // To sram
-    output logic [SRAM_ADDR_W-1:0] rd_addr [NUM_BUF][NUM_PORTS]
+/*
+ * ============================================================================
+ *  Module: sram_ctrl
+ * ============================================================================
+ *
+ *  Description:
+ *      SRAM address-generation wrapper for the Flash Attention datapath.
+ *
+ *      This module receives the current MXU and VPU memory indices and forwards
+ *      them to rd_addr_gen, which produces the read addresses for the internal
+ *      Q, K, V, and O memory banks.
+ *
+ *      The module performs address generation only. It does not manage double
+ *      buffering, bank arbitration, DMA transfers, or memory ownership.
+ *
+ * Author: Paulo Dietrich
+ * ============================================================================
+ */
 
+module sram_ctrl (
+    // mxu
+    input k_dim_t a_k_rd_idx,
+    input k_dim_t b_k_rd_idx,
+    input m_dim_t a_m_rd_offset,
+    input n_dim_t b_n_rd_offset,
+
+    // memory layout
+    input logic [BUF_ADDR_W-1:0] qk_stride_words,
+
+    // vpu
+    input logic [V_IDX_W-1:0] vf_idx,
+
+    // sram
+    output logic [BUF_ADDR_W-1:0] rd_addr [NUM_BUF][NUM_PORTS]
 );
 
-//    db_ctrl U_DBC (
-//        .clk(clk), 
-//        .rst_n(rst_n),
-//        .Atile_advance(Atile_advance),
-//        .dma_chA_done (dma_chA_done),
-//        .dma_chB_done (dma_chB_done),
-//        .bufA_read_ram(bufA_read_ram),
-//        .bufB_read_ram(bufB_read_ram),
-//        .bufC_read_ram(bufA_read_ram),
-//        .bufD_read_ram(bufB_read_ram),
-//        .mxu_reading_ram  (mxu_reading_ram)
-//    );
-    
+    // Generate the read addresses for all SRAM banks and ports.
     rd_addr_gen U_RAG (
         .a_k_rd_idx    (a_k_rd_idx),
-        .a_k_rd_idx    (a_k_rd_idx),
-        .bufA_rd_addr_a(bufA_rd_addr_a),
-        .bufA_rd_addr_b(bufA_rd_addr_b),
-        .bufB_rd_addr_a(bufB_rd_addr_a), 
-        .bufB_rd_addr_b(bufB_rd_addr_b)
+        .b_k_rd_idx    (b_k_rd_idx),
+        .a_m_rd_offset (a_m_rd_offset),
+        .b_n_rd_offset (b_n_rd_offset),
+        .qk_stride_words(qk_stride_words),
+        .vf_idx        (vf_idx),
+        .rd_addr       (rd_addr)
     );
-    
+
 endmodule

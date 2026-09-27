@@ -1,0 +1,18 @@
+{
+  "passed": true,
+  "checks": [
+    "capabilities, startup and CRC standard vector",
+    "real Python client writes and reads actual Q BRAM over serial pins",
+    "all input banks, maximum address, and 64-word packet chunk boundary",
+    "CRC failure rejects entire write before memory changes",
+    "invalid opcode, bank, range, write-to-O, length, and sequence length",
+    "oversize drain, truncated frame timeout, framing error and stream resynchronization",
+    "sequence ID wraps through 255 to zero",
+    "busy protection and serial reset abort with SRAM retention",
+    "end-to-end UART load/readback/compute/O compare: N=8",
+    "end-to-end UART load/readback/compute/O compare: N=16",
+    "end-to-end UART load/readback/compute/O compare: N=256",
+    "end-to-end UART load/readback/compute/O compare: N=8",
+    "Python N x 16 matrix packing, signed bytes and software-reference output"
+  ]
+}
