@@ -54,7 +54,7 @@ The complete system includes:
 
 At a high level:
 
-![Top Block Diagram](docs/images/fa_bd.png)
+![Top Block Diagram](docs/images/fa_bd_revised.png)
 
 The PC communicates with the board through the Basys 3's onboard USB/UART bridge.
 
