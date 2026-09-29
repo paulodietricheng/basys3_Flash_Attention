@@ -203,6 +203,8 @@ $$
 
 for an $M \times K$ matrix A and $K \times N$ matrix B.
 
+![Top Block Diagram](images/mxu_bd.png)
+
 For attention, its configured dimensions are
 
 $$
