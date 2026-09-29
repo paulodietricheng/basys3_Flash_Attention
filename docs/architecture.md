@@ -41,48 +41,7 @@ The design therefore prioritizes architectural clarity and resource reuse over m
 
 At the highest level, the system consists of the following blocks:
 
-```text
-                         Host PC
-                            |
-                         USB-UART
-                            |
-                            v
-                    +---------------+
-                    | UART RX / TX  |
-                    +-------+-------+
-                            |
-                            v
-                    +---------------+
-                    | UART Command  |
-                    |  Controller   |
-                    +-------+-------+
-                            |
-                 Host Memory Interface
-                            |
-                            v
-+-----------------------------------------------------------+
-|                         fa_top                            |
-|                                                           |
-|  +-------------+       +-------------------------------+  |
-|  | Attention   |------>|              MXU              |  |
-|  | Controller  |       |                               |  |
-|  +-------------+       | Operand Handler               |  |
-|                        | Operand Skewer                |  |
-|                        | 8 x 8 Systolic Array          |  |
-|                        +---------------+---------------+  |
-|                                        | S = QK^T         |
-|                                        v                  |
-|  +-------------+       +-------------------------------+  |
-|  | Q BRAM      |       |              VPU              |  |
-|  | K BRAM      |------>| Online Softmax + PV Update    |  |
-|  | V BRAM      |       +---------------+---------------+  |
-|  | O BRAM      |                       |                  |
-|  +-------------+                       v                  |
-|                                  +------------+            |
-|                                  | O Writer   |----------->|
-|                                  +------------+   O BRAM   |
-+-----------------------------------------------------------+
-```
+![Top Block Diagram](images/fa_bd_revised.png)
 
 The hardware hierarchy is:
 
