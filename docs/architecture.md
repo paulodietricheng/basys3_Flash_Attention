@@ -678,4 +678,7 @@ Only an 8×8 attention-score tile is processed at one time. The complete $N\time
 
 ### Time-Multilpexing of the Scaling Unit
 
-In the VPU, the Saling unit (SCL) is time multiplexed and reused for any computation of the kind $$ \vec{v_{scaled}}=\alpha * \vec{\v} $$
+In the VPU, the Saling unit (SCL) is time multiplexed and reused for any computation of the kind:
+$$ 
+\vec{v_{scaled}}=\alpha * \vec{\v} 
+$$
