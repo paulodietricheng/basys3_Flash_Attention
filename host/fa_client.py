@@ -364,6 +364,11 @@ def main():
 
     fixture = sub.add_parser('run-fixture')
     fixture.add_argument('folder', type=Path)
+    fixture.add_argument(
+        '--output',
+        type=Path,
+        help='Save the verified output matrix and device status as JSON',
+    )
 
     matrices = sub.add_parser('run-matrices')
     matrices.add_argument('input', type=Path)
@@ -434,8 +439,21 @@ def main():
                 )
 
             elif args.action == 'run-fixture':
-                status, _ = device.run_fixture(args.folder)
-                print('PASS input readback and exact O comparison.')
+                status, output = device.run_fixture(args.folder)
+                if status['error']:
+                    raise ProtocolError('FPGA error flag is set after the fixture run')
+
+                if args.output:
+                    args.output.write_text(
+                        json.dumps({'O': output, 'status': status}, indent=2) + '\n'
+                    )
+
+                print(
+                    f'PASS input readback and exact O comparison: '
+                    f'{len(output)} vectors x {status["d_model"]} values.'
+                )
+                if args.output:
+                    print(f'Wrote {args.output}.')
                 print(json.dumps(status, indent=2))
 
             else:
