@@ -352,13 +352,14 @@ Elements are signed INT8 values:
 -128 to 127
 ```
 
-Run:
+To run your own matrices:
+
+```python
+python -c "import json, random; from pathlib import Path; r=random.Random(42); data={k:[[r.randint(-8,7) for _ in range(16)] for _ in range(256)] for k in ('Q','K','V')}; Path('examples/input_256_random.json').write_text(json.dumps(data), encoding='utf-8')"
+```
 
 ```bash
-python host/fa_client.py \
-    --port COM6 \
-    run-matrices examples/input_8.json \
-    --output result.json
+python host/fa_client.py --port COM6 run-matrices examples/input_256_random.json --output result_256_matrices.json
 ```
 
 The client automatically handles:
