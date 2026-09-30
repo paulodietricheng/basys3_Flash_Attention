@@ -41,48 +41,7 @@ The design therefore prioritizes architectural clarity and resource reuse over m
 
 At the highest level, the system consists of the following blocks:
 
-```text
-                         Host PC
-                            |
-                         USB-UART
-                            |
-                            v
-                    +---------------+
-                    | UART RX / TX  |
-                    +-------+-------+
-                            |
-                            v
-                    +---------------+
-                    | UART Command  |
-                    |  Controller   |
-                    +-------+-------+
-                            |
-                 Host Memory Interface
-                            |
-                            v
-+-----------------------------------------------------------+
-|                         fa_top                            |
-|                                                           |
-|  +-------------+       +-------------------------------+  |
-|  | Attention   |------>|              MXU              |  |
-|  | Controller  |       |                               |  |
-|  +-------------+       | Operand Handler               |  |
-|                        | Operand Skewer                |  |
-|                        | 8 x 8 Systolic Array          |  |
-|                        +---------------+---------------+  |
-|                                        | S = QK^T         |
-|                                        v                  |
-|  +-------------+       +-------------------------------+  |
-|  | Q BRAM      |       |              VPU              |  |
-|  | K BRAM      |------>| Online Softmax + PV Update    |  |
-|  | V BRAM      |       +---------------+---------------+  |
-|  | O BRAM      |                       |                  |
-|  +-------------+                       v                  |
-|                                  +------------+            |
-|                                  | O Writer   |----------->|
-|                                  +------------+   O BRAM   |
-+-----------------------------------------------------------+
-```
+![Top Block Diagram](images/fa_bd_revised.png)
 
 The hardware hierarchy is:
 
@@ -244,6 +203,8 @@ $$
 
 for an $M \times K$ matrix A and $K \times N$ matrix B.
 
+![Top Block Diagram](images/mxu_bd.png)
+
 For attention, its configured dimensions are
 
 $$
@@ -322,27 +283,6 @@ A conventional systolic matrix multiplication cannot inject every row and column
 
 `mxu_op_skewer` delays operand lane $i$ by $i$ cycles before injection.
 
-Conceptually:
-
-```text
-A0 -> -------------------->
-A1 -> [D] ---------------->
-A2 -> [D][D] ------------->
-...
-
-             B0
-             |
-             v
-
-          [D] B1
-             |
-             v
-
-       [D][D] B2
-             |
-             v
-```
-
 This diagonalizes the operand wavefront so that the appropriate A and B elements meet at each PE during the correct cycle.
 
 ---
@@ -360,22 +300,6 @@ $$
 processing elements.
 
 A operands propagate horizontally while B operands propagate vertically:
-
-```text
-                B0       B1       B2              B7
-                 |        |        |                |
-                 v        v        v                v
-
-A0 ------->    PE00 --> PE01 --> PE02 --> ... --> PE07
-                |        |        |                |
-A1 ------->    PE10 --> PE11 --> PE12 --> ... --> PE17
-                |        |        |                |
-A2 ------->    PE20 --> PE21 --> PE22 --> ... --> PE27
-                |        |        |                |
-...             ...      ...      ...              ...
-                |        |        |                |
-A7 ------->    PE70 --> PE71 --> PE72 --> ... --> PE77
-```
 
 Each PE owns one output accumulator and performs
 
@@ -595,7 +519,7 @@ The O bank can subsequently be accessed through the generic host memory interfac
 For a sequence containing $N$ tokens, execution proceeds as follows:
 
 ```text
-1. Host quantizes/prepares Q, K and V as INT8 matrices.
+1. Host prepares Q, K and V as INT8 matrices.
 
 2. Host converts:
        Q -> dimension-major memory layout
@@ -736,7 +660,7 @@ The UART receiver contains an additional synchronizer for the asynchronous seria
 
 # 15. Resource-Driven Architectural Decisions
 
-The Basys 3 is intentionally a constrained platform for an attention accelerator.
+The Basys 3 is a constrained platform for an attention accelerator.
 
 Its XC7A35T FPGA provides 90 DSP slices and 1,800 Kbits of block RAM [2]. Several architectural decisions follow directly from this constraint.
 
@@ -751,3 +675,10 @@ Partial sums remain inside their associated PEs while operands propagate through
 ### Tiled sequence processing
 
 Only an 8×8 attention-score tile is processed at one time. The complete $N\times N$ score matrix is not
+
+### Time-Multilpexing of the Scaling Unit
+
+In the VPU, the Saling unit (SCL) is time multiplexed and reused for any computation of the kind:
+$$ 
+\vec{v_{scaled}}=\alpha * \vec{\v} 
+$$
